@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
    DigiTemp
 
-   Copyright 1996-2005 by Brian C. Lane <bcl@brianlane.com>
+   Copyright 1996-2009 by Brian C. Lane <bcl@brianlane.com>
    All Rights Reserved
 
    This program is free software; you can redistribute it and/or modify it
@@ -18,7 +18,7 @@
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
    ----------------------------------------------------------------------- */
-#define BANNER_1     "DigiTemp v3.5.0 Copyright 1996-2007 by Brian C. Lane\n"
+#define BANNER_1     "DigiTemp v3.6.0 Copyright 1996-2009 by Brian C. Lane\n"
 #define BANNER_2     "GNU Public License v2.0 - http://www.digitemp.com\n"
 #define BANNER_3     "Compiled for %s\n\n"
 
