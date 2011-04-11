@@ -587,6 +587,7 @@ int log_string( char *line )
     close( fd );
   } else {
     printf( line );
+    fflush( stdout );
   }
   return 0;
 }  
