@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
    DigiTemp
-      
-   Copyright 1996-2007 by Brian C. Lane <bcl@brianlane.com>
+
+   Copyright 1996-2012 by Brian C. Lane <bcl@brianlane.com>
    All Rights Reserved
 
    This program is free software; you can redistribute it and/or modify it
@@ -17,18 +17,18 @@
    You should have received a copy of the GNU General Public License along
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
-   
+
      digitemp -w                        Walk the LAN & show all
-     digitemp -i			Initalize .digitemprc file
+     digitemp -i                        Initalize .digitemprc file
      digitemp -I                        Initialize .digitemprc w/sorted serial #s
-     digitemp -s/dev/ttyS0		Set serial port (required)
-     digitemp -cdigitemp.conf		Configuration File
-     digitemp -r1000			Set Read timeout to 1000mS
-     digitemp -l/var/log/temperature	Send output to logfile
-     digitemp -v			Verbose mode
-     digitemp -t0			Read Temperature
+     digitemp -s/dev/ttyS0              Set serial port (required)
+     digitemp -cdigitemp.conf           Configuration File
+     digitemp -r1000                    Set Read timeout to 1000mS
+     digitemp -l/var/log/temperature    Send output to logfile
+     digitemp -v                        Verbose mode
+     digitemp -t0                       Read Temperature
      digitemp -q                        Quiet, no copyright banner
-     digitemp -a			Read all Temperatures
+     digitemp -a                        Read all Temperatures
      digitemp -d5                       Delay between samples (in sec.)
      digitemp -n50                      Number of times to repeat. 0=forever
      digitemp -A                        Treat DS2438 as A/D converter
@@ -150,130 +150,130 @@
 /* For tracking down strange errors */
 #undef BCL_DEBUG
 
-extern char 	*optarg;              
-extern int	optind, opterr, optopt;
+extern char     *optarg;
+extern int      optind, opterr, optopt;
 
 #if defined(FREEBSD) || defined(DARWIN)
 extern int optreset;
 #endif /* FREEBSD or DARWIN */
 
-extern const char dtlib[];			/* Library Used            */
- 
-char serial_port[40],                        /* Path to the serial port */
-     tmp_serial_port[40], 
-     serial_dev[40],				/* Device name without /dev/ */
-     log_file[1024],                         /* Path to the log file    */
-     tmp_log_file[1024],
-     temp_format[80],                        /* Format for temperature readings	*/
-     tmp_temp_format[80],
-     counter_format[80],                     /* Format for counter readings		*/
-     tmp_counter_format[80],
-     humidity_format[80],			/* Format for Humidity readings		*/
-     tmp_humidity_format[80],
-     conf_file[1024],			/* Configuration File      */
-     option_list[40];
-int	read_time,				/* Pause during read	   */
-	tmp_read_time,
-	log_type,				/* output format type	   */
-	tmp_log_type,
-    num_cs = 0,                             /* Number of sensors on cplr */
-	opts = 0;				/* Bitmask of flags	        */
+extern const char dtlib[];                      /* Library Used */
 
-struct _coupler *coupler_top = NULL;		/* Linked list of couplers */
+char serial_port[40];                           /* Path to the serial port */
+char tmp_serial_port[40];
+char serial_dev[40];                            /* Device name without /dev/ */
+char log_file[1024];                            /* Path to the log file    */
+char tmp_log_file[1024];
+char temp_format[80];                           /* Format for temperature readings */
+char tmp_temp_format[80];
+char counter_format[80];                        /* Format for counter readings */
+char tmp_counter_format[80];
+char humidity_format[80];                       /* Format for Humidity readings */
+char tmp_humidity_format[80];
+char conf_file[1024];                           /* Configuration File */
+char option_list[40];
+int read_time;                                  /* Pause during read */
+int tmp_read_time;
+int log_type;                                   /* output format type */
+int tmp_log_type;
+int num_cs = 0;                                 /* Number of sensors on cplr */
+int opts = 0;                                   /* Bitmask of flags */
 
-unsigned char Last2409[9];                      /* Last selected coupler   */
+struct _coupler *coupler_top = NULL;            /* Linked list of couplers */
+
+unsigned char Last2409[9];                      /* Last selected coupler */
 
 
-int	global_msec = 10;			/* For ReadCOM delay       */
-int	global_msec_max = 15;
+int     global_msec = 10;                       /* For ReadCOM delay */
+int     global_msec_max = 15;
 
 /* ----------------------------------------------------------------------- *
    Print out the program usage
  * ----------------------------------------------------------------------- */
 void usage()
 {
-  printf(BANNER_1);
-  printf(BANNER_2);
-  printf(BANNER_3, dtlib );		         /* Report Library version */
-  printf("\nUsage: digitemp [-s -i -I -U -l -r -v -t -a -d -n -o -c]\n");
-  printf("                -i                            Initalize .digitemprc file\n");
-  printf("                -I                            Initalize .digitemprc file w/sorted serial #s\n");
-  printf("                -w                            Walk the full device tree\n");
-  printf("                -s /dev/ttyS0                 Set serial port\n");
-  printf("                -l /var/log/temperature       Send output to logfile\n");
-  printf("                -c digitemp.conf              Configuration File\n");
-  printf("                -r 1000                       Read delay in mS\n");
-  printf("                -v                            Verbose output\n");
-  printf("                -t 0                          Read Sensor #\n");
-  printf("                -q                            No Copyright notice\n");
-  printf("                -a                            Read all Sensors\n");
-  printf("                -d 5                          Delay between samples (in sec.)\n");
-  printf("                -n 50                         Number of times to repeat\n");
-  printf("                                              0=loop forever\n");
-  printf("                -A                            Treat DS2438 as A/D converter\n");
-  printf("                -O\"counter format string\"      See description below\n");
-  printf("                -o 2                          Output format for logfile\n");
-  printf("                -o\"output format string\"      See description below\n");
-  printf("                -H\"Humidity format string\"    See description below\n");
-  printf("\nLogfile formats:  1 = One line per sensor, time, C, F (default)\n");
-  printf("                  2 = One line per sample, elapsed time, temperature in C\n");
-  printf("                  3 = Same as #2, except temperature is in F\n");
-  printf("        #2 and #3 have the data seperated by tabs, suitable for import\n");
-  printf("        into a spreadsheet or other graphing software.\n");
-  printf("\n        The format string uses strftime tokens plus 5 special ones for\n");
-  printf("        digitemp - %%s for sensor #, %%C for centigrade, %%F for fahrenheit,\n");
-  printf("        %%R to output the hex serial number, and %%N for seconds since Epoch.\n");
-  printf("        The case of the token is important! The default format string is:\n");
-  printf("        \"%%b %%d %%H:%%M:%%S Sensor %%s C: %%.2C F: %%.2F\" which gives you an\n");
-  printf("        output of: May 24 21:25:43 Sensor 0 C: 23.66 F: 74.59\n\n");
-  printf("        The counter format string has 2 special specifiers:\n");
-  printf("        %%n is the counter # and %%C is the count in decimal.\n");
-  printf("        The humidity format uses %%h for the humidity in percent\n\n");
+    printf(BANNER_1);
+    printf(BANNER_2);
+    printf(BANNER_3, dtlib );                      /* Report Library version */
+    printf("\nUsage: digitemp [-s -i -I -U -l -r -v -t -a -d -n -o -c]\n");
+    printf("                -i                            Initalize .digitemprc file\n");
+    printf("                -I                            Initalize .digitemprc file w/sorted serial #s\n");
+    printf("                -w                            Walk the full device tree\n");
+    printf("                -s /dev/ttyS0                 Set serial port\n");
+    printf("                -l /var/log/temperature       Send output to logfile\n");
+    printf("                -c digitemp.conf              Configuration File\n");
+    printf("                -r 1000                       Read delay in mS\n");
+    printf("                -v                            Verbose output\n");
+    printf("                -t 0                          Read Sensor #\n");
+    printf("                -q                            No Copyright notice\n");
+    printf("                -a                            Read all Sensors\n");
+    printf("                -d 5                          Delay between samples (in sec.)\n");
+    printf("                -n 50                         Number of times to repeat\n");
+    printf("                                              0=loop forever\n");
+    printf("                -A                            Treat DS2438 as A/D converter\n");
+    printf("                -O\"counter format string\"      See description below\n");
+    printf("                -o 2                          Output format for logfile\n");
+    printf("                -o\"output format string\"      See description below\n");
+    printf("                -H\"Humidity format string\"    See description below\n");
+    printf("\nLogfile formats:  1 = One line per sensor, time, C, F (default)\n");
+    printf("                  2 = One line per sample, elapsed time, temperature in C\n");
+    printf("                  3 = Same as #2, except temperature is in F\n");
+    printf("        #2 and #3 have the data seperated by tabs, suitable for import\n");
+    printf("        into a spreadsheet or other graphing software.\n");
+    printf("\n        The format string uses strftime tokens plus 5 special ones for\n");
+    printf("        digitemp - %%s for sensor #, %%C for centigrade, %%F for fahrenheit,\n");
+    printf("        %%R to output the hex serial number, and %%N for seconds since Epoch.\n");
+    printf("        The case of the token is important! The default format string is:\n");
+    printf("        \"%%b %%d %%H:%%M:%%S Sensor %%s C: %%.2C F: %%.2F\" which gives you an\n");
+    printf("        output of: May 24 21:25:43 Sensor 0 C: 23.66 F: 74.59\n\n");
+    printf("        The counter format string has 2 special specifiers:\n");
+    printf("        %%n is the counter # and %%C is the count in decimal.\n");
+    printf("        The humidity format uses %%h for the humidity in percent\n\n");
 }
 
 
 /* ----------------------------------------------------------------------- *
    Free up all memory used by the coupler list
  * ----------------------------------------------------------------------- */
-void free_coupler( int free_only )
+void free_coupler(int free_only)
 {
-  unsigned char   a[3];
-  struct _coupler *c;
-  
-  c = coupler_top;
-  while(c)
-  {
-     /* Turn off the Coupler */
-     if ( !free_only )
-       SetSwitch1F(0, c->SN, ALL_LINES_OFF, 0, a, TRUE);
+    unsigned char a[3];
+    struct _coupler *c;
 
-    /* Free up the serial number lists */
-    if( c->num_main > 0 )
-      free( c->main );
-      
-    if( c->num_aux > 0 )
-      free( c->aux );
-      
-    /* Point to the next in the list */
-    coupler_top = c->next;
-    
-    /* Free up the current entry */
-    free( c );
-    
     c = coupler_top;
-  } /* Coupler free loop */
+    while(c)
+    {
+        /* Turn off the Coupler */
+        if ( !free_only )
+            SetSwitch1F(0, c->SN, ALL_LINES_OFF, 0, a, TRUE);
 
-  /* Make sure its null */
-  coupler_top = NULL;
+        /* Free up the serial number lists */
+        if( c->num_main > 0 )
+            free( c->main );
+
+        if( c->num_aux > 0 )
+            free( c->aux );
+
+        /* Point to the next in the list */
+        coupler_top = c->next;
+
+        /* Free up the current entry */
+        free( c );
+
+        c = coupler_top;
+    }
+
+    /* Make sure its null */
+    coupler_top = NULL;
 }
 
 
 /* -----------------------------------------------------------------------
    Convert degrees C to degrees F
    ----------------------------------------------------------------------- */
-float c2f( float temp )
+float c2f(float temp)
 {
-  return 32 + ((temp*9)/5);
+    return 32 + ((temp*9)/5);
 }
 
 
@@ -286,22 +286,22 @@ float c2f( float temp )
 
    If humidity is <0 then it is invalid
    ----------------------------------------------------------------------- */
-int build_tf( char *time_format, char *format, int sensor, 
-              float temp_c, int humidity, unsigned char *sn )
+int build_tf(char *time_format, char *format, int sensor, float temp_c,
+             int humidity, unsigned char *sn)
 {
-  char	*tf_ptr,
-  	*lf_ptr,
-  	*lf_ptr2,
-  	*tk_ptr,
-  	token[80],
-  	temp[80];
-  	
-  if( !time_format || !format )
-    return 0;
+    char *tf_ptr;
+    char *lf_ptr;
+    char *lf_ptr2;
+    char *tk_ptr;
+    char token[80];
+    char temp[80];
+
+    if( !time_format || !format )
+        return 0;
 
   tf_ptr = time_format;
   lf_ptr = format;
-  
+
   while( *lf_ptr )
   {
     if( *lf_ptr != '%' )
@@ -316,84 +316,84 @@ int build_tf( char *time_format, char *format, int sensor,
       /* 
          At this point it has a potential format specifier, copy it over
          to the token variable, up to the alpha-numeric specifier.
-	 
-	 It needs to stop copying after it gets the alpha character
+         
+         It needs to stop copying after it gets the alpha character
       */
       while( isalnum( *lf_ptr ) || (*lf_ptr == '.') || (*lf_ptr == '*') 
              || (*lf_ptr == '%') )
       {
         *tk_ptr++ = *lf_ptr++;
         *tk_ptr = 0;
-	
-	/* Break out when the alpha character is copied over */
-	if( isalpha( *(lf_ptr-1) ) )
-	  break;
+        
+        /* Break out when the alpha character is copied over */
+        if( isalpha( *(lf_ptr-1) ) )
+          break;
       }
       
       /* see if the format specifier is digitemp or strftime */
       switch( *(tk_ptr-1) )
       {
         case 's' :
-        	/* Sensor number */
-	        /* Change the specifier to a d */
-	        *(tk_ptr-1) = 'd';
-	        
-	        /* Pass it through sprintf */
-	        sprintf( temp, token, sensor );
+                /* Sensor number */
+                /* Change the specifier to a d */
+                *(tk_ptr-1) = 'd';
+                
+                /* Pass it through sprintf */
+                sprintf( temp, token, sensor );
 
-		/* Insert this into the time format string */
-		tk_ptr = temp;
-		while( *tk_ptr )
-		  *tf_ptr++ = *tk_ptr++;
-        	break;
-        	
+                /* Insert this into the time format string */
+                tk_ptr = temp;
+                while( *tk_ptr )
+                  *tf_ptr++ = *tk_ptr++;
+                break;
+                
         case 'h' :
-        	/* Relative humidity % */
-	        /* Change the specifier to a d */
-	        *(tk_ptr-1) = 'd';
-	        
-	        /* Pass it through sprintf */
-	        sprintf( temp, token, humidity );
+                /* Relative humidity % */
+                /* Change the specifier to a d */
+                *(tk_ptr-1) = 'd';
+                
+                /* Pass it through sprintf */
+                sprintf( temp, token, humidity );
 
-		/* Insert this into the time format string */
-		tk_ptr = temp;
-		while( *tk_ptr )
-		  *tf_ptr++ = *tk_ptr++;
-        	break;
-        	
+                /* Insert this into the time format string */
+                tk_ptr = temp;
+                while( *tk_ptr )
+                  *tf_ptr++ = *tk_ptr++;
+                break;
+                
         case 'F' :
-        	/* Degrees Fahrenheit */
-	        /* Change the specifier to a f */
-	        *(tk_ptr-1) = 'f';
-	        
-	        /* Pass it through sprintf */
-	        sprintf( temp, token, c2f(temp_c) );
-
-		/* Insert this into the time format string */
-		tk_ptr = temp;
-		while( *tk_ptr )
-		  *tf_ptr++ = *tk_ptr++;
-        
-        	break;
-        	
-        case 'C' :
-        	/* Degrees Centigrade */
+                /* Degrees Fahrenheit */
                 /* Change the specifier to a f */
-	        *(tk_ptr-1) = 'f';
-	        
-	        /* Pass it through sprintf */
-	        sprintf( temp, token, temp_c );
+                *(tk_ptr-1) = 'f';
+                
+                /* Pass it through sprintf */
+                sprintf( temp, token, c2f(temp_c) );
 
-		/* Insert this into the time format string */
-		tk_ptr = temp;
-		while( *tk_ptr )
-		  *tf_ptr++ = *tk_ptr++;        	
-        	break;
-        	
+                /* Insert this into the time format string */
+                tk_ptr = temp;
+                while( *tk_ptr )
+                  *tf_ptr++ = *tk_ptr++;
+        
+                break;
+                
+        case 'C' :
+                /* Degrees Centigrade */
+                /* Change the specifier to a f */
+                *(tk_ptr-1) = 'f';
+                
+                /* Pass it through sprintf */
+                sprintf( temp, token, temp_c );
+
+                /* Insert this into the time format string */
+                tk_ptr = temp;
+                while( *tk_ptr )
+                  *tf_ptr++ = *tk_ptr++;                
+                break;
+                
         case 'R' :
-        	/* ROM Serial Number */
+                /* ROM Serial Number */
                 /* Change the specifier to a hex (x) */
-	        *(tk_ptr-1) = 'X';
+                *(tk_ptr-1) = 'X';
 
                 /* Insert the serial number in HEX, yes its ugly,
                    but it works and saves using another temporary
@@ -402,24 +402,24 @@ int build_tf( char *time_format, char *format, int sensor,
                 sprintf( temp, "%02X%02X%02X%02X%02X%02X%02X%02X",
                          sn[0],sn[1],sn[2],sn[3],sn[4],sn[5],sn[6],sn[7]);
                 
-		/* Insert this into the time format string */
-		tk_ptr = temp;
-		while( *tk_ptr )
-		  *tf_ptr++ = *tk_ptr++;
-        	break;
+                /* Insert this into the time format string */
+                tk_ptr = temp;
+                while( *tk_ptr )
+                  *tf_ptr++ = *tk_ptr++;
+                break;
 
         case 'N' :
-        	/* Seconds since Epoch */
-	        /* Change the specifier to a s and pass to time */
-	        *(tk_ptr-1) = 's';
+                /* Seconds since Epoch */
+                /* Change the specifier to a s and pass to time */
+                *(tk_ptr-1) = 's';
 
-        	/* Intentional fall through */
+                /* Intentional fall through */
         default:
-		/* Not something for us, copy it into the time format */
-        	tk_ptr = token;
-        	while( *tk_ptr )
-        	  *tf_ptr++ = *tk_ptr++;
-        	break;
+                /* Not something for us, copy it into the time format */
+                tk_ptr = token;
+                while( *tk_ptr )
+                  *tf_ptr++ = *tk_ptr++;
+                break;
       } 
     }
   
@@ -443,13 +443,13 @@ int build_tf( char *time_format, char *format, int sensor,
 int build_cf( char *time_format, char *format, int sensor, int page,
               unsigned long count, unsigned char *sn )
 {
-  char	*tf_ptr,
-  	*lf_ptr,
-  	*lf_ptr2,
-  	*tk_ptr,
-  	token[80],
-  	temp[80];
-  	
+  char  *tf_ptr,
+        *lf_ptr,
+        *lf_ptr2,
+        *tk_ptr,
+        token[80],
+        temp[80];
+        
   if( !time_format || !format )
     return 0;
 
@@ -479,56 +479,56 @@ int build_cf( char *time_format, char *format, int sensor, int page,
       switch( *(tk_ptr-1) )
       {
         case 's' :
-        	/* Sensor number */
-	        /* Change the specifier to a d */
-	        *(tk_ptr-1) = 'd';
-	        
-	        /* Pass it through sprintf */
-	        sprintf( temp, token, sensor );
+                /* Sensor number */
+                /* Change the specifier to a d */
+                *(tk_ptr-1) = 'd';
+                
+                /* Pass it through sprintf */
+                sprintf( temp, token, sensor );
 
-		/* Insert this into the time format string */
-		tk_ptr = temp;
-		while( *tk_ptr )
-		  *tf_ptr++ = *tk_ptr++;
-        	break;
-        	
+                /* Insert this into the time format string */
+                tk_ptr = temp;
+                while( *tk_ptr )
+                  *tf_ptr++ = *tk_ptr++;
+                break;
+                
         case 'F' :
-        	break;
+                break;
 
         case 'n' :
                 /* Show the page/counter # (0 or 1) */
-	        /* Change the specifier to a d */
-	        *(tk_ptr-1) = 'd';
-	        
-	        /* Pass it through sprintf */
-	        sprintf( temp, token, page );
+                /* Change the specifier to a d */
+                *(tk_ptr-1) = 'd';
+                
+                /* Pass it through sprintf */
+                sprintf( temp, token, page );
 
-		/* Insert this into the time format string */
-		tk_ptr = temp;
-		while( *tk_ptr )
-		  *tf_ptr++ = *tk_ptr++;
+                /* Insert this into the time format string */
+                tk_ptr = temp;
+                while( *tk_ptr )
+                  *tf_ptr++ = *tk_ptr++;
                 break;
-        	
+                
         case 'C' :
-        	/* Counter reading, 32 bit value */
+                /* Counter reading, 32 bit value */
                 /* Change the specifier to a ld */
-	        *(tk_ptr-1) = 'l';
-	        *(tk_ptr) = 'd';
-	        *(tk_ptr+1) = 0;
-	        
-	        /* Pass it through sprintf */
-	        sprintf( temp, token, count );
+                *(tk_ptr-1) = 'l';
+                *(tk_ptr) = 'd';
+                *(tk_ptr+1) = 0;
+                
+                /* Pass it through sprintf */
+                sprintf( temp, token, count );
 
-		/* Insert this into the time format string */
-		tk_ptr = temp;
-		while( *tk_ptr )
-		  *tf_ptr++ = *tk_ptr++;        	
-        	break;
-        	
+                /* Insert this into the time format string */
+                tk_ptr = temp;
+                while( *tk_ptr )
+                  *tf_ptr++ = *tk_ptr++;                
+                break;
+                
         case 'R' :
-        	/* ROM Serial Number */
+                /* ROM Serial Number */
                 /* Change the specifier to a hex (x) */
-	        *(tk_ptr-1) = 'X';
+                *(tk_ptr-1) = 'X';
 
                 /* Insert the serial number in HEX, yes its ugly,
                    but it works and saves using another temporary
@@ -537,24 +537,24 @@ int build_cf( char *time_format, char *format, int sensor, int page,
                 sprintf( temp, "%02X%02X%02X%02X%02X%02X%02X%02X",
                          sn[0],sn[1],sn[2],sn[3],sn[4],sn[5],sn[6],sn[7]);
                 
-		/* Insert this into the time format string */
-		tk_ptr = temp;
-		while( *tk_ptr )
-		  *tf_ptr++ = *tk_ptr++;        	
-        	break;
+                /* Insert this into the time format string */
+                tk_ptr = temp;
+                while( *tk_ptr )
+                  *tf_ptr++ = *tk_ptr++;                
+                break;
 
         case 'N' :
-        	/* Seconds since Epoch */
-	        /* Change the specifier to a s and pass to time */
-	        *(tk_ptr-1) = 's';
+                /* Seconds since Epoch */
+                /* Change the specifier to a s and pass to time */
+                *(tk_ptr-1) = 's';
 
-        	/* Intentional fall through */
+                /* Intentional fall through */
         default:
-		/* Not something for us, copy it into the time format */
-        	tk_ptr = token;
-        	while( *tk_ptr )
-        	  *tf_ptr++ = *tk_ptr++;
-        	break;
+                /* Not something for us, copy it into the time format */
+                tk_ptr = token;
+                while( *tk_ptr )
+                  *tf_ptr++ = *tk_ptr++;
+                break;
       } 
     }
   }
@@ -600,9 +600,9 @@ int log_string( char *line )
    ----------------------------------------------------------------------- */
 int log_temp( int sensor, float temp_c, unsigned char *sn )
 {
-  char	temp[1024],
-  	time_format[160];
-  time_t	mytime;
+  char  temp[1024],
+        time_format[160];
+  time_t        mytime;
 
 
   mytime = time(NULL);
@@ -632,9 +632,9 @@ int log_temp( int sensor, float temp_c, unsigned char *sn )
    ----------------------------------------------------------------------- */
 int log_counter( int sensor, int page, unsigned long counter, unsigned char *sn )
 {
-  char	temp[1024],
-  	time_format[160];
-  time_t	mytime;
+  char  temp[1024],
+        time_format[160];
+  time_t        mytime;
 
 
   mytime = time(NULL);
@@ -664,9 +664,9 @@ int log_counter( int sensor, int page, unsigned long counter, unsigned char *sn 
    ----------------------------------------------------------------------- */
 int log_humidity( int sensor, double temp_c, int humidity, unsigned char *sn )
 {
-  char	temp[1024],
-  	time_format[160];
-  time_t	mytime;
+  char  temp[1024],
+        time_format[160];
+  time_t        mytime;
 
 
   mytime = time(NULL);
@@ -980,7 +980,7 @@ int read_temperature( int sensor_family, int sensor )
               /* need to output something (0,-,NaN?) to keep columns consistent */
               switch( log_type )
               {
-            	/* Multiple Centigrade temps per line */
+                /* Multiple Centigrade temps per line */
                 case 2:
                  /* Multiple Fahrenheit temps per line */
                  case 3:     sprintf( temp, "\t%3.2f", (double) 0 );
@@ -1073,16 +1073,16 @@ int read_counter( int sensor_family, int sensor )
 /* -----------------------------------------------------------------------
    Read the DS2406
    General Purpose PIO
-	by Tomasz R. Surmacz (tsurmacz@ict.pwr.wroc.pl)
+        by Tomasz R. Surmacz (tsurmacz@ict.pwr.wroc.pl)
    !!!! Not finished !!!!
    Needs an output format string system. Hard-coded for the moment.
    ----------------------------------------------------------------------- */
 int read_ds2406( int sensor_family, int sensor )
 {
-  int		pio;
-  char		temp[1024],
-  		    time_format[160];
-  time_t	mytime;
+  int           pio;
+  char          temp[1024],
+                    time_format[160];
+  time_t        mytime;
 
   
   if( sensor_family == DS2406_FAMILY )
@@ -1091,8 +1091,8 @@ int read_ds2406( int sensor_family, int sensor )
     pio = PIO_Reading(0, 0);
 
     if (pio==-1) {
-	printf(" PIO DS2406 sensor %d CRC failed\n", sensor);
-	return FALSE;
+        printf(" PIO DS2406 sensor %d CRC failed\n", sensor);
+        return FALSE;
     }
     mytime = time(NULL);
     if( mytime )
@@ -1110,20 +1110,20 @@ int read_ds2406( int sensor_family, int sensor )
 
         default:    
                     sprintf( time_format, "%%b %%d %%H:%%M:%%S Sensor %d PIO: %02x,%02x, PIO-A: %s%s", sensor, pio>>8, pio&0xff,
-			((pio&0x1000)!=0)? // Port A latch: there was a change
-				(((pio&0x0400)!=0)?
-					"ON"	// and the current state is ON
-					:"on")
-				:"off",	// the current state is off, no change
-			((pio&0x4000)!=0)? // we have 2 ports if bit is 1
-				( ((pio&0x2000)!=0)?
-					(((pio&0x0800)!=0)? // the latch says 1
-						" PIO-B: ON" // and state too
-						:" PIO-B: on")
-					:" PIO-B: off") // the latch said no
-				:
-				"")
-			;
+                        ((pio&0x1000)!=0)? // Port A latch: there was a change
+                                (((pio&0x0400)!=0)?
+                                        "ON"    // and the current state is ON
+                                        :"on")
+                                :"off", // the current state is off, no change
+                        ((pio&0x4000)!=0)? // we have 2 ports if bit is 1
+                                ( ((pio&0x2000)!=0)?
+                                        (((pio&0x0800)!=0)? // the latch says 1
+                                                " PIO-B: ON" // and state too
+                                                :" PIO-B: on")
+                                        :" PIO-B: off") // the latch said no
+                                :
+                                "")
+                        ;
                     /* Handle the time format tokens */
                     strftime( temp, 1024, time_format, localtime( &mytime ) );
                     strcat( temp, "\n" );
@@ -1153,12 +1153,12 @@ int read_ds2406( int sensor_family, int sensor )
    ----------------------------------------------------------------------- */
 int read_ds2438( int sensor_family, int sensor )
 {
-  double	temperature;
-  float		vdd,
-  		ad;
-  char		temp[1024],
-  		time_format[160];
-  time_t	mytime;
+  double        temperature;
+  float         vdd,
+                ad;
+  char          temp[1024],
+                time_format[160];
+  time_t        mytime;
   int           cad = 0;
 
   
@@ -1252,13 +1252,13 @@ int read_ds2438( int sensor_family, int sensor )
    ----------------------------------------------------------------------- */
 int read_humidity( int sensor_family, int sensor )
 {
-  double	temp_c;			/* Converted temperature in degrees C */
-  float		sup_voltage,		/* Supply voltage in volts            */
-		hum_voltage,		/* Humidity sensor voltage in volts   */
-		humidity;		/* Calculated humidity in %RH         */
-  unsigned char	TempSN[8];
-  int		try;  
-	
+  double        temp_c;                 /* Converted temperature in degrees C */
+  float         sup_voltage,            /* Supply voltage in volts            */
+                hum_voltage,            /* Humidity sensor voltage in volts   */
+                humidity;               /* Calculated humidity in %RH         */
+  unsigned char TempSN[8];
+  int           try;  
+        
   for( try = 0; try < MAX_READ_TRIES; try++ )
   {
     /* Read Vdd, the supply voltage */
@@ -1273,10 +1273,10 @@ int read_humidity( int sensor_family, int sensor )
         /* Convert the measured voltage to humidity */
         humidity = (((hum_voltage/sup_voltage) - 0.16) * 161.29)
                       / (1.0546 - (0.00216 * temp_c));
-	if( humidity > 100.0 ) 
-	  humidity = 100.0;
-	else if( humidity < 0.0 )
-	  humidity = 0.0;
+        if( humidity > 100.0 ) 
+          humidity = 100.0;
+        else if( humidity < 0.0 )
+          humidity = 0.0;
 
         /* Log the temperature and humidity */
         owSerialNum( 0, &TempSN[0], TRUE );
@@ -1301,7 +1301,7 @@ int read_humidity( int sensor_family, int sensor )
 int read_temperature_DS1923( int sensor_family, int sensor )
 {
   unsigned char TempSN[8],
-  		block2[2];
+                block2[2];
   int try;                     /* Number of tries at reading device    */
   int b;
   int pre_t;
@@ -1365,9 +1365,9 @@ int read_temperature_DS1923( int sensor_family, int sensor )
           humidity = (adval-0.958f) / 0.0307f;
 
           /* Log the temperature and humidity */
-	  /* TUTAJ masz wartosci we floatach dla Thermochrona
- 	     sensor to nr sensora z pliku konfiguracyjnego,
- 	     a tempsn to pewnie id urzadzenia 1wire
+          /* TUTAJ masz wartosci we floatach dla Thermochrona
+             sensor to nr sensora z pliku konfiguracyjnego,
+             a tempsn to pewnie id urzadzenia 1wire
           */
           owSerialNum( 0, &TempSN[0], TRUE );
           log_humidity( sensor, temp_c, humidity, TempSN );
@@ -1479,10 +1479,10 @@ int read_device( struct _roms *sensor_list, int sensor )
     case DS28EA00_FAMILY:
     case DS2413_FAMILY:
       if( (opts & OPT_DS2438) || (sensor_family==DS2413_FAMILY) ) { // read PIO
-		status = read_pio_ds28ea00( sensor_family, sensor );
-	    break;
-	  }
-  	  // else - drop through to DS1822
+                status = read_pio_ds28ea00( sensor_family, sensor );
+            break;
+          }
+          // else - drop through to DS1822
     case DS1820_FAMILY:
     case DS1822_FAMILY:
     case DS18B20_FAMILY:
@@ -1498,21 +1498,21 @@ int read_device( struct _roms *sensor_list, int sensor )
       status = read_counter( sensor_family, sensor );
       break;
 
-	case DS2438_FAMILY:
-		// What type is it?
-		{
-		int page;
-		for( page=3; page<8; page++)
-		{
-			get_ibl_type( 0, page, 0);
-      	}}
-		if( opts & OPT_DS2438 )
-		{
-			status = read_ds2438( sensor_family, sensor );
-		} else {
-			status = read_humidity( sensor_family, sensor );
-		}
-		break;
+        case DS2438_FAMILY:
+                // What type is it?
+                {
+                int page;
+                for( page=3; page<8; page++)
+                {
+                        get_ibl_type( 0, page, 0);
+        }}
+                if( opts & OPT_DS2438 )
+                {
+                        status = read_ds2438( sensor_family, sensor );
+                } else {
+                        status = read_humidity( sensor_family, sensor );
+                }
+                break;
   }
   
   return status;
@@ -1560,10 +1560,10 @@ int read_all( struct _roms *sensor_list )
    ----------------------------------------------------------------------- */
 int read_rcfile( char *fname, struct _roms *sensor_list )
 {
-  FILE	*fp;
-  char	temp[1024];
-  char	*ptr;
-  int	sensors, x;
+  FILE  *fp;
+  char  temp[1024];
+  char  *ptr;
+  int   sensors, x;
   struct _coupler *c_ptr, *coupler_end;
   
   sensors = 0;
@@ -1642,17 +1642,17 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
       /* Create a new entry in the coupler linked list */
       if( (c_ptr = malloc( sizeof( struct _coupler ) ) ) == NULL )
       {
-	      fprintf( stderr, "Failed to allocate %d bytes for coupler linked list\n", (int) sizeof( struct _coupler ) );
+              fprintf( stderr, "Failed to allocate %d bytes for coupler linked list\n", (int) sizeof( struct _coupler ) );
           free_coupler(0);
           if( sensor_list != NULL )
-	          free(sensor_list);
+                  free(sensor_list);
 #ifndef OWUSB
-	      owRelease(0);
+              owRelease(0);
 #else
           owRelease(0, temp );
           fprintf( stderr, "USB ERROR: %s\n", temp );
 #endif /* OWUSB */
-	      exit(EXIT_ERR);
+              exit(EXIT_ERR);
       }
 
       c_ptr->next = NULL;
@@ -1663,13 +1663,13 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
 
       if( coupler_top == NULL )
       {
-	/* First coupler, add it to the top of the list */
-	coupler_top = c_ptr;
-	coupler_end = c_ptr;
+        /* First coupler, add it to the top of the list */
+        coupler_top = c_ptr;
+        coupler_end = c_ptr;
       } else {
         /* Add the new coupler to the list, point to new end */
         coupler_end->next = c_ptr;
-	coupler_end = c_ptr;
+        coupler_end = c_ptr;
       }
 
       /* Ignore the coupler # */
@@ -1698,27 +1698,27 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
       while( c_ptr && (x > 0) )
       {
         c_ptr = c_ptr->next;
-	x--;
+        x--;
       }
-	
+        
       /* Make sure we are pointing to something */
       if( c_ptr )
       {
         /* Main/Aux branch */
         ptr = strtok( NULL, " \t\n" );
-	
-	if( *ptr == 'M' )
-	{
-	  /* Add to the main list */
-	  c_ptr->num_main++;
-	  
+        
+        if( *ptr == 'M' )
+        {
+          /* Add to the main list */
+          c_ptr->num_main++;
+          
           /* Allocate enough space for the new serial number */
           if( (c_ptr->main = realloc( c_ptr->main, c_ptr->num_main * 8 ) ) == NULL )
           {
             fprintf( stderr, "Failed to allocate %d bytes for main branch\n", c_ptr->num_main * 8 );
             free_coupler(0);
-	    if( sensor_list != NULL )
-	      free( sensor_list );
+            if( sensor_list != NULL )
+              free( sensor_list );
 #ifndef OWUSB
             owRelease(0);
 #else
@@ -1727,24 +1727,24 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
 #endif /* OWUSB */
             exit(EXIT_ERR);
           }
-	  
-	  /* Add the serial number to the list */
-	  for( x = 0; x < 8; x++ )
-	  {
+          
+          /* Add the serial number to the list */
+          for( x = 0; x < 8; x++ )
+          {
             ptr = strtok( NULL, " \t\n" );
             c_ptr->main[((c_ptr->num_main-1)*8)+x] = strtol( ptr, (char **)NULL,0);
-          }	  
-	} else {
-	  /* Add to the aux list */
-	  c_ptr->num_aux++;
-	  
+          }       
+        } else {
+          /* Add to the aux list */
+          c_ptr->num_aux++;
+          
           /* Allocate enough space for the new serial number */
           if( (c_ptr->aux = realloc( c_ptr->aux, c_ptr->num_aux * 8 ) ) == NULL )
           {
             fprintf( stderr, "Failed to allocate %d bytes for aux branch\n", c_ptr->num_aux * 8 );
             free_coupler(0);
-	    if( sensor_list != NULL )
-	      free( sensor_list );
+            if( sensor_list != NULL )
+              free( sensor_list );
 #ifndef OWUSB
             owRelease(0);
 #else
@@ -1753,14 +1753,14 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
 #endif /* OWUSB */
             exit(EXIT_ERR);
           } /* Allocate more aux space */
-	  
-	  /* Add the serial number to the list */
-	  for( x = 0; x < 8; x++ )
-	  {
+          
+          /* Add the serial number to the list */
+          for( x = 0; x < 8; x++ )
+          {
             ptr = strtok( NULL, " \t\n" );
             c_ptr->aux[((c_ptr->num_aux-1)*8)+x] = strtol( ptr, (char **)NULL, 0 );
           } /* aux serial number loop */
-	} /* Main/Aux branch check */
+        } /* Main/Aux branch check */
       } /* c_ptr Pointing somewhere check */
     } else {
       fprintf( stderr, "Error reading rcfile: %s\n", fname );
@@ -1799,8 +1799,8 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
    ----------------------------------------------------------------------- */
 int write_rcfile( char *fname, struct _roms *sensor_list )
 {
-  FILE	*fp;
-  int	x, y, i;
+  FILE  *fp;
+  int   x, y, i;
   struct _coupler *c_ptr;
 
   if( ( fp = fopen( fname, "wb" ) ) == NULL )
@@ -1812,7 +1812,7 @@ int write_rcfile( char *fname, struct _roms *sensor_list )
   if( log_file[0] != 0 )
     fprintf( fp, "LOG %s\n", log_file );
 
-  fprintf( fp, "READ_TIME %d\n", read_time );		/* mSeconds	*/
+  fprintf( fp, "READ_TIME %d\n", read_time );           /* mSeconds     */
 
   fprintf( fp, "LOG_TYPE %d\n", log_type );
   fprintf( fp, "LOG_FORMAT \"%s\"\n", temp_format );
@@ -1827,7 +1827,7 @@ int write_rcfile( char *fname, struct _roms *sensor_list )
     
     for( y = 0; y < 8; y++ )
     {
-	  fprintf( fp, "0x%02X ", sensor_list->roms[(x * 8) + y] );
+          fprintf( fp, "0x%02X ", sensor_list->roms[(x * 8) + y] );
     }
     fprintf( fp, "\n" );
   }
@@ -2212,7 +2212,7 @@ int Init1WireLan( struct _roms *sensor_list )
                (TempSN[0] == DS2413_FAMILY) ||
                (TempSN[0] == DS2422_FAMILY) ||
                (TempSN[0] == DS2423_FAMILY) ||
-	       (TempSN[0] == DS2438_FAMILY)
+               (TempSN[0] == DS2438_FAMILY)
              )
     {
       /* Print the serial number */
@@ -2263,7 +2263,7 @@ int Init1WireLan( struct _roms *sensor_list )
           (TempSN[0] == DS2422_FAMILY) ||
           (TempSN[0] == DS2423_FAMILY) ||
           (TempSN[0] == DS2438_FAMILY)
-	)
+        )
       {
         /* Print the serial number */
         printSN( TempSN, 0 );
@@ -2308,7 +2308,7 @@ int Init1WireLan( struct _roms *sensor_list )
           (TempSN[0] == DS2422_FAMILY) ||
           (TempSN[0] == DS2423_FAMILY) ||
           (TempSN[0] == DS2438_FAMILY)
-	)
+        )
       {
         /* Print the serial number */
         printSN( TempSN, 0 );
@@ -2415,15 +2415,15 @@ int file_exists (char * fileName)
  * ----------------------------------------------------------------------- */
 int main( int argc, char *argv[] )
 {
-  int		sensor;			/* Single sensor index to read  */
-  char		temp[1024];		/* Temporary strings            */
-  int		c;
-  int		sample_delay = 0;	/* Delay between samples (SEC)	*/
-  unsigned int	x,
-  		num_samples = 1;	/* Number of samples 		*/
-  time_t	last_time,		/* Last time we started samples */
-		start_time;		/* Starting time		*/
-  long int	elapsed_time;		/* Elapsed from start		*/
+  int           sensor;                 /* Single sensor index to read  */
+  char          temp[1024];             /* Temporary strings            */
+  int           c;
+  int           sample_delay = 0;       /* Delay between samples (SEC)  */
+  unsigned int  x,
+                num_samples = 1;        /* Number of samples            */
+  time_t        last_time,              /* Last time we started samples */
+                start_time;             /* Starting time                */
+  long int      elapsed_time;           /* Elapsed from start           */
   struct _roms  sensor_list;            /* Attached Roms                */
 
 
@@ -2439,23 +2439,23 @@ int main( int argc, char *argv[] )
   }
 
 #ifndef OWUSB
-  serial_port[0] = 0;			/* No default port		*/
+  serial_port[0] = 0;                   /* No default port              */
 #else
   strcpy( serial_port, "USB" );
 #endif
   tmp_serial_port[0] = 0;
-  log_file[0] = 0;			/* No default log file		*/
+  log_file[0] = 0;                      /* No default log file          */
   tmp_log_file[0] = 0;
   tmp_counter_format[0] = 0;
   tmp_temp_format[0] = 0;
   tmp_humidity_format[0] = 0;
-  read_time = 1000;			/* 1000mS read delay		*/
+  read_time = 1000;                     /* 1000mS read delay            */
   tmp_read_time = -1;
-  sensor = 0;				/* First sensor	in list		*/
-  log_type = 1;			        /* Normal DigiTemp logfile	*/
+  sensor = 0;                           /* First sensor in list         */
+  log_type = 1;                         /* Normal DigiTemp logfile      */
   tmp_log_type = -1;
-  sample_delay = 0;			/* No delay			*/
-  num_samples = 1;			/* Only do it once by default	*/
+  sample_delay = 0;                     /* No delay                     */
+  num_samples = 1;                      /* Only do it once by default   */
 
   /* Default log format string:                 */
   /* May 24 21:25:43 Sensor 0 C: 23.66 F: 74.59 */
@@ -2466,7 +2466,7 @@ int main( int argc, char *argv[] )
   strcpy( option_list, "?ThqiaAvwr:f:s:l:t:d:n:o:c:O:H:" );
 
 
-  /* Command line options override any .digitemprc options temporarily	*/
+  /* Command line options override any .digitemprc options temporarily  */
   /* Unless the -i parameter is specified, then changes are saved to    */
   /* .digitemprc file                                                   */
 
@@ -2478,109 +2478,109 @@ int main( int argc, char *argv[] )
     /* Process the command line arguments */
     switch( c )
     {
-      case 'c': if( optarg )			/* Configuration file	*/
-		{
-		  strncpy( conf_file, optarg, sizeof( conf_file ) - 1 );
-		}
-		break;
+      case 'c': if( optarg )                    /* Configuration file   */
+                {
+                  strncpy( conf_file, optarg, sizeof( conf_file ) - 1 );
+                }
+                break;
 
       case 'T': opts |= OPT_TEST;
-	       break;
+               break;
 
       case 'w': opts |= OPT_WALK;               /* Walk the LAN         */
                 break;
     
-      case 'i':	opts |= OPT_INIT;		/* Initalize the s#'s	*/
-      		break;
-      		
-      case 'r':	tmp_read_time = atoi(optarg);	/* Read delay in mS	*/
-      		break;
-      		
-      case 'v': opts |= OPT_VERBOSE;		/* Verbose		*/
-      		break;
+      case 'i': opts |= OPT_INIT;               /* Initalize the s#'s   */
+                break;
+                
+      case 'r': tmp_read_time = atoi(optarg);   /* Read delay in mS     */
+                break;
+                
+      case 'v': opts |= OPT_VERBOSE;            /* Verbose              */
+                break;
 
-      case 's': if(optarg)			/* Serial port		*/
-      		{
-      		  strncpy( tmp_serial_port, optarg, sizeof(tmp_serial_port) - 1 );
-      		}
-      		break;
-      		
-      case 'l': if(optarg)			/* Log Filename		*/
-      		{
-      		  strncpy( tmp_log_file, optarg, sizeof( tmp_log_file ) - 1);
-      		}
-      		break;
-      		
-      case 't':	if(optarg)			/* Single Sensor #	*/
-      		{
-      		  sensor = atoi(optarg);
-      		  opts |= OPT_SINGLE;
-      		}
-      		break;
+      case 's': if(optarg)                      /* Serial port          */
+                {
+                  strncpy( tmp_serial_port, optarg, sizeof(tmp_serial_port) - 1 );
+                }
+                break;
+                
+      case 'l': if(optarg)                      /* Log Filename         */
+                {
+                  strncpy( tmp_log_file, optarg, sizeof( tmp_log_file ) - 1);
+                }
+                break;
+                
+      case 't': if(optarg)                      /* Single Sensor #      */
+                {
+                  sensor = atoi(optarg);
+                  opts |= OPT_SINGLE;
+                }
+                break;
 
-      case 'a': opts |= OPT_ALL;		/* Read All sensors	*/
-		break;
+      case 'a': opts |= OPT_ALL;                /* Read All sensors     */
+                break;
 
-      case 'd': if(optarg)			/* Sample Delay		*/
-		{
-		  sample_delay = atoi(optarg);
-		}
-		break;
+      case 'd': if(optarg)                      /* Sample Delay         */
+                {
+                  sample_delay = atoi(optarg);
+                }
+                break;
 
-      case 'n': if(optarg)			/* Number of samples 	*/
-		{
-		  num_samples = atoi(optarg);
-		}
-		break;
+      case 'n': if(optarg)                      /* Number of samples    */
+                {
+                  num_samples = atoi(optarg);
+                }
+                break;
 
-      case 'A': opts |= OPT_DS2438;		/* Treat DS2438 as A/D converter */
-      		break;
+      case 'A': opts |= OPT_DS2438;             /* Treat DS2438 as A/D converter */
+                break;
 
-      case 'o': if(optarg)			/* Temperature Logfile format	*/
-		{
-		  if( isdigit( optarg[0] ) )
-		  {
-		    /* Its a number, get it */
-		    tmp_log_type = atoi(optarg);
-		  } else {
-		    /* Not a nuber, get the string */
+      case 'o': if(optarg)                      /* Temperature Logfile format   */
+                {
+                  if( isdigit( optarg[0] ) )
+                  {
+                    /* Its a number, get it */
+                    tmp_log_type = atoi(optarg);
+                  } else {
+                    /* Not a nuber, get the string */
                     if( strlen( optarg ) > sizeof(tmp_temp_format)-1 )
                       printf("Temperature format string too long! > %d\n", (int) sizeof(tmp_temp_format)-1);
                     else
                       strncpy( tmp_temp_format, optarg, sizeof(tmp_temp_format)-1 );
-		    tmp_log_type=0;
-		  }
-		}
-		break;
-		
-      case 'O': if(optarg)			/* Counter Logfile format	*/
-		{
+                    tmp_log_type=0;
+                  }
+                }
+                break;
+                
+      case 'O': if(optarg)                      /* Counter Logfile format       */
+                {
                   if( strlen( optarg ) > sizeof(tmp_counter_format)-1 )
                     printf("Counter format string too long! > %d\n", (int) sizeof(tmp_counter_format)-1);
                   else
                     strncpy( tmp_counter_format, optarg, sizeof(tmp_counter_format)-1 );
-		}
-		break;
-		
-      case 'H': if(optarg)			/* Humidity Logfile format	*/
-		{
+                }
+                break;
+                
+      case 'H': if(optarg)                      /* Humidity Logfile format      */
+                {
                   if( strlen( optarg ) > sizeof(tmp_humidity_format)-1 )
                     printf("Humidity format string too long! > %d\n", (int) sizeof(tmp_humidity_format)-1);
                   else
                     strncpy( tmp_humidity_format, optarg, sizeof(tmp_humidity_format)-1 );
-		}
-		break;
-		
+                }
+                break;
+                
       case 'q': opts |= OPT_QUIET;
-      		break;
+                break;
 
       case ':':
       case 'h':
       case '?': usage();
-      		exit(EXIT_HELP);
-      		break;
+                exit(EXIT_HELP);
+                break;
     
-      default:	break;
+      default:  break;
     } /* switch getopt */
   }  /* while getopt */
 
@@ -2597,15 +2597,15 @@ int main( int argc, char *argv[] )
 
   /* Now we go through and override with values from the command line */
   if (tmp_read_time > 0) {
-	read_time = tmp_read_time;
+        read_time = tmp_read_time;
   }
   
   if (tmp_serial_port[0] != 0) {
-	strncpy( serial_port, tmp_serial_port, sizeof(serial_port)-1 );
+        strncpy( serial_port, tmp_serial_port, sizeof(serial_port)-1 );
   }
   
   if (tmp_log_file[0] != 0) {
-	strncpy( log_file, tmp_log_file, sizeof(log_file)-1 );
+        strncpy( log_file, tmp_log_file, sizeof(log_file)-1 );
   }
   
   if (tmp_log_type != -1) {
@@ -2695,10 +2695,10 @@ int main( int argc, char *argv[] )
 
     exit(EXIT_LOCKED);
   }
-#endif		/* LOCKDEV	*/
-#endif		/* OWUSB	*/
-#endif		/* LINUX 	*/
-#endif		/* !OWUSB 	*/
+#endif          /* LOCKDEV      */
+#endif          /* OWUSB        */
+#endif          /* LINUX        */
+#endif          /* !OWUSB       */
 
   /* Connect to the MLan network */
 #ifndef OWUSB
@@ -2723,9 +2723,9 @@ int main( int argc, char *argv[] )
 #ifndef OWUSB
 #ifdef LOCKDEV
     dev_unlock( serial_dev, 0 );
-#endif		/* LOCKDEV	*/
-#endif		/* OWUSB	*/
-#endif		/* LINUX	*/
+#endif          /* LOCKDEV      */
+#endif          /* OWUSB        */
+#endif          /* LINUX        */
     exit(EXIT_ERR);
   }
 
@@ -2751,9 +2751,9 @@ int main( int argc, char *argv[] )
 #ifndef OWUSB
 #ifdef LOCKDEV
     dev_unlock( serial_dev, 0 );
-#endif		/* LOCKDEV	*/
-#endif		/* OWUSB	*/
-#endif		/* LINUX	*/
+#endif          /* LOCKDEV      */
+#endif          /* OWUSB        */
+#endif          /* LINUX        */
 
     exit(EXIT_OK);
   }
@@ -2784,9 +2784,9 @@ int main( int argc, char *argv[] )
 #ifndef OWUSB
 #ifdef LOCKDEV
       dev_unlock( serial_dev, 0 );
-#endif		/* LOCKDEV	*/
-#endif		/* OWUSB	*/
-#endif		/* LINUX	*/
+#endif          /* LOCKDEV      */
+#endif          /* OWUSB        */
+#endif          /* LINUX        */
 
       exit(EXIT_ERR);
     }
@@ -2808,11 +2808,11 @@ int main( int argc, char *argv[] )
          start of the line
        */
       case 2:
-      case 3:	sprintf(temp, "%ld", elapsed_time );
+      case 3:   sprintf(temp, "%ld", elapsed_time );
                 log_string( temp );
-		break;
+                break;
       default:
-		break;
+                break;
     }
 
 
@@ -2834,10 +2834,10 @@ int main( int argc, char *argv[] )
          start of the line
        */
       case 2:
-      case 3:	log_string( "\n" );
-		break;
+      case 3:   log_string( "\n" );
+                break;
       default:
-		break;
+                break;
     }
 
     /* Wait until we have passed last_time + sample_delay. We do it
@@ -2876,27 +2876,27 @@ int main( int argc, char *argv[] )
 #ifndef OWUSB
 #ifdef LOCKDEV
   dev_unlock( serial_dev, 0 );
-#endif		/* LOCKDEV	*/
-#endif		/* OWUSB	*/
-#endif		/* LINUX	*/
+#endif          /* LOCKDEV      */
+#endif          /* OWUSB        */
+#endif          /* LINUX        */
 
   exit(EXIT_OK);
 }
 
 
 unsigned short int Get_2800_Pio(int portnum) {
-	unsigned short int pio = -1;
+        unsigned short int pio = -1;
 
-	if(owAccess(portnum)) {
-		// read pio command
-		owWriteByte(portnum, 0xf5);
-		pio=owReadByte(portnum);
-	}
+        if(owAccess(portnum)) {
+                // read pio command
+                owWriteByte(portnum, 0xf5);
+                pio=owReadByte(portnum);
+        }
     if(owAccess(portnum)) {
-		return (pio);
-	} else {
-		return -1;
-	}
+                return (pio);
+        } else {
+                return -1;
+        }
 }
 
 /* -----------------------------------------------------------------------
@@ -2906,21 +2906,21 @@ unsigned short int Get_2800_Pio(int portnum) {
 int read_pio_ds28ea00( int sensor_family, int sensor )
 {
   unsigned char pio;
-  char		temp[1024],
-  		    time_format[160];
-  time_t	mytime;
+  char          temp[1024],
+                    time_format[160];
+  time_t        mytime;
 
   
   if ( (sensor_family == DS28EA00_FAMILY) || (sensor_family == DS2413_FAMILY) )
   {
     pio = Get_2800_Pio(0);
 
-	if ( ((pio ^ (pio>>4)) &0xf) != 0xf) {
-	  // upper nibble should be complement of lower nibble
+        if ( ((pio ^ (pio>>4)) &0xf) != 0xf) {
+          // upper nibble should be complement of lower nibble
           // sprintf( temp, "Sensor %d Read Error (%02x)\n", sensor, pio );
       fprintf(stderr, "Sensor %d Read Error (%02x)\n", sensor,  pio );
-	  return FALSE;
-	}
+          return FALSE;
+        }
 
 
     mytime = time(NULL);
@@ -2930,7 +2930,7 @@ int read_pio_ds28ea00( int sensor_family, int sensor )
       switch( log_type )
       {
         /* Multiple Centigrade temps per line */
-		case 3:
+                case 3:
         case 2:     sprintf( temp, "\t%02x", pio );
                     break;
 
