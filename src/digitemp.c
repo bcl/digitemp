@@ -159,9 +159,9 @@ extern int optreset;
 
 extern const char dtlib[];			/* Library Used            */
  
-char serial_port[40],                        /* Path to the serial port */
-     tmp_serial_port[40], 
-     serial_dev[40],				/* Device name without /dev/ */
+char serial_port[1024],				/* Path to the serial port */
+     tmp_serial_port[1024],
+     serial_dev[1024],				/* Device name without /dev/ */
      log_file[1024],                         /* Path to the log file    */
      tmp_log_file[1024],
      temp_format[80],                        /* Format for temperature readings	*/
@@ -1577,7 +1577,7 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
     return 1;
   }
   
-  while( fgets( temp, 80, fp ) != 0 )
+  while( fgets( temp, sizeof(temp), fp ) != 0 )
   {
     if( (temp[0] == '\n') || (temp[0] == '#') )
       continue;
@@ -1644,8 +1644,6 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
       {
 	      fprintf( stderr, "Failed to allocate %d bytes for coupler linked list\n", (int) sizeof( struct _coupler ) );
           free_coupler(0);
-          if( sensor_list != NULL )
-	          free(sensor_list);
 #ifndef OWUSB
 	      owRelease(0);
 #else
@@ -1717,8 +1715,6 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
           {
             fprintf( stderr, "Failed to allocate %d bytes for main branch\n", c_ptr->num_main * 8 );
             free_coupler(0);
-	    if( sensor_list != NULL )
-	      free( sensor_list );
 #ifndef OWUSB
             owRelease(0);
 #else
@@ -1743,8 +1739,6 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
           {
             fprintf( stderr, "Failed to allocate %d bytes for aux branch\n", c_ptr->num_aux * 8 );
             free_coupler(0);
-	    if( sensor_list != NULL )
-	      free( sensor_list );
 #ifndef OWUSB
             owRelease(0);
 #else
@@ -1764,7 +1758,6 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
       } /* c_ptr Pointing somewhere check */
     } else {
       fprintf( stderr, "Error reading rcfile: %s\n", fname );
-      free( sensor_list );
       fclose( fp );
       return -1;
     }
