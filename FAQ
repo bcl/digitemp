@@ -1,5 +1,5 @@
 DigiTemp v3.6.0 Frequently Asked Questions
-Copyright 1996-2008 by Brian C. Lane <bcl@brianlane.com>
+Copyright 1996-2012 by Brian C. Lane <bcl@brianlane.com>
 http://www.brianlane.com
 http://www.digitemp.com
 
@@ -79,7 +79,7 @@ Q. How long can the wire be?
    is the recommended cable for networks of almost any length. You can get
    away with other cable but be prepared to rip it all up and replace it 
    with CAT5 if it doesn't work.
-   
+
    Having a hub and supplying +5v to the sensors will increase the liklihood
    of your long network operating properly. I have had reports of people using
    CAT5 and a passive network up to 200m long.
@@ -94,7 +94,6 @@ Q. I get a result of 85C when reading temperatures
 
    2. You are trying to read the sensor too quickly. The DS18S20 needs about
       750mS of delay in order to properly convert the temperature.
-         
 
 Q. I have glitches in my data, what do I do?
 
@@ -130,8 +129,8 @@ Q. What is the difference between the DS9097-U and the App. Note 74 type
    instructions for building your own.
 
    As of DigiTemp v3.0.0 support for both style adapters has been integrated
-   into the same code tree. You no longer need to use v1.x for the DS9097 passive
-   adapter and v2.x for the DS9097U adapter.
+   into the same code tree. You no longer need to use v1.x for the DS9097
+   passive adapter and v2.x for the DS9097U adapter.
 
 Q. When will digitemp support the one-wire hub?
 
@@ -139,7 +138,7 @@ Q. When will digitemp support the one-wire hub?
    and keeps track of which branch it finds the sensors on. It doesn't
    support cascaded hubs (hubs connected behind a hub), only multiple hubs
    on the main 1-wire lan.
-   
+
 Q. When will Digitemp support the one-wire Weather Station?
 
    Probably never. DigiTemp has 1 purpose - to read temperatures. Weather
@@ -151,7 +150,7 @@ Q. When will Digitemp support the one-wire Weather Station?
 
    I have found a possible source for Humidity, Barometer and Lightning 
    sensors at http://www.jjware.com/index2.htm
-   
+
    I do have plans to write my own weather station software though. No release
    date as of yet, but it is being worked on.
 
@@ -161,13 +160,11 @@ Q. When will it support 1-wire device X?
    support for the DS2438 battery monitor which is used in many of the more
    complicated sensors, like humidity and pressure. It also has native
    support for humidity using the AAD TI-8540 humidity sensor.
-   
-   
+
 Q. Will the DS2490 USB to 1-wire adapter work?
 
    Maybe. I have reports of varying levels of success with it. On my Debian
    Sarge system using libusb 1.4 it does not work. On my Fedora Core 3 
    laptop it worked sometimes. On OSX it does not work. Some people report that
    it works fine for them, others are like me and have mixed results.
-
 

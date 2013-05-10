@@ -1,20 +1,20 @@
 %define with_libusb 1
 
-Summary:           Dallas Semiconductor 1-wire device reading console application
-Name:              digitemp
-Version:           3.6.0
-Release:           1%{?dist}
-License:           GPLv2+
-Group:             Applications/System
-URL:               http://www.digitemp.com/
-Source0:           http://www.digitemp.com/software/linux/%{name}-%{version}.tar.gz
-Source1:           dthowto.txt
-Source2:           DS9097_Schematic.gif
-Patch0:            digitemp-cflags.patch
+Summary: Dallas Semiconductor 1-wire device reading console application
+Name:    digitemp
+Version: 3.6.0
+Release: 1%{?dist}
+License: GPLv2+
+Group:   Applications/System
+URL:     http://www.digitemp.com/
+Source0: http://www.digitemp.com/software/linux/%{name}-%{version}.tar.gz
+Source1: dthowto.txt
+Source2: DS9097_Schematic.gif
+Patch0:  digitemp-cflags.patch
 %if %{with_libusb}
-BuildRequires:     libusb-devel
+BuildRequires: libusb-devel
 %endif
-BuildRoot:         %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 %description
 DigiTemp is a simple to use console application for reading values from
@@ -27,29 +27,29 @@ MicroLAN Coupler (used in 1-wire hubs) and the AAG TAI-8540 humidity sensor.
 
 %prep
 %setup -q
-%patch0 -p1 -b .cflags
-cp -f %{SOURCE1} %{SOURCE2} .
+%patch0 -p1
+%{__cp} -f %{SOURCE1} %{SOURCE2} .
 
 %build
-make ds9097 %{?_smp_mflags}
-make ds9097u %{?_smp_mflags}
+%{__make} ds9097 %{?_smp_mflags}
+%{__make} ds9097u %{?_smp_mflags}
 %if %{with_libusb}
-make ds2490 %{?_smp_mflags}
+%{__make} ds2490 %{?_smp_mflags}
 %endif
 
 %install
-rm -rf $RPM_BUILD_ROOT
-mkdir -p $RPM_BUILD_ROOT{%{_bindir},%{_mandir}/man1}
-install -m 755 digitemp_DS9097 digitemp_DS9097U $RPM_BUILD_ROOT%{_bindir}
+%{__rm} -rf $RPM_BUILD_ROOT
+%{__mkdir} -p $RPM_BUILD_ROOT{%{_bindir},%{_mandir}/man1}
+%{__install} -m 755 digitemp_DS9097 digitemp_DS9097U $RPM_BUILD_ROOT%{_bindir}
 %if %{with_libusb}
-install -m 755 digitemp_DS2490 $RPM_BUILD_ROOT%{_bindir}
+%{__install} -m 755 digitemp_DS2490 $RPM_BUILD_ROOT%{_bindir}
 %endif
 
 iconv -f iso-8859-1 -t utf-8 -o digitemp.1.utf8 digitemp.1
-install -m 644 digitemp.1.utf8 $RPM_BUILD_ROOT%{_mandir}/man1/%{name}.1
+%{__install} -m 644 digitemp.1.utf8 $RPM_BUILD_ROOT%{_mandir}/man1/%{name}.1
 
 %clean
-rm -rf $RPM_BUILD_ROOT
+%{__rm} -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root)
