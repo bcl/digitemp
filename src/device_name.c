@@ -148,7 +148,13 @@ char *device_name( unsigned int family )
       
     case 0x96:
       return "DS1955/DS1957B Java Cryptographic iButton";
-  
+
+    case 0xEE:
+      return "Hobby Boards with Temperature Sensor";
+
+    case 0xEF:
+      return "Hobby Boards";
+
     default:
       return "Unknown Family Code";
   }
