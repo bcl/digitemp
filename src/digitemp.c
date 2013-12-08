@@ -586,7 +586,7 @@ int log_string( char *line )
       perror("Error loging to logfile");
     close( fd );
   } else {
-    printf( line );
+    printf( "%s", line );
     fflush( stdout );
   }
   return 0;
