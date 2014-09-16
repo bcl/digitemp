@@ -31,14 +31,13 @@
 /*	DRJ Modifications:
  |	2013-07-28
  |		moved from libusb0.1 to libusb1.0 in the hopes of more reliability
-	70	usb_dev_handle		->	libusb_device_handle
-	87	usb_init					->	libusb_init
-	88	usb_set_debug			->	libusb_set_debug
-	89	usb_find_busses		->	
-	90	usb_find_devices	->	
-	
-	Should libusb_device_descriptor be used instead of libusb_device- Nope!
-	
+ |	70	usb_dev_handle		->	libusb_device_handle
+ |	87	usb_init					->	libusb_init
+ |	88	usb_set_debug			->	libusb_set_debug
+ |	89	usb_find_busses		->	
+ |	90	usb_find_devices	->	
+ |		Oh well!  same problems as before.
+ |		The problems ended up being with owTouchReset()
  */
 
 #define DEBUG_USB 1
