@@ -1,7 +1,7 @@
 #
 # Makefile for DigiTemp
 #
-# Copyright 1996-2005 by Brian C. Lane <bcl@brianlane.com>
+# Copyright 1996-2012 by Brian C. Lane <bcl@brianlane.com>
 # See COPYING for GNU Public License
 #
 # Please note that this Makefile *needs* GNU make. BSD make won't do.
@@ -111,52 +111,52 @@ help:
 	@echo "Please note: You must use GNU make to compile digitemp"
 	@echo ""
 
-all:		help
+all:	help
 
 
 # Build the Linux executable
-ds9097:		$(OBJS) $(HDRS) $(ONEWIREOBJS) $(ONEWIREHDRS) $(DS9097OBJS)
-		$(CC) $(OBJS) $(ONEWIREOBJS) $(DS9097OBJS) -o digitemp_DS9097 $(LIBS)
+ds9097:	$(OBJS) $(HDRS) $(ONEWIREOBJS) $(ONEWIREHDRS) $(DS9097OBJS)
+	$(CC) $(OBJS) $(ONEWIREOBJS) $(DS9097OBJS) -o digitemp_DS9097 $(LIBS)
 
-ds9097u:	$(OBJS) $(HDRS) $(ONEWIREOBJS) $(ONEWIREHDRS) $(DS9097UOBJS)
-		$(CC) $(OBJS) $(ONEWIREOBJS) $(DS9097UOBJS) -o digitemp_DS9097U $(LIBS)
+ds9097u:$(OBJS) $(HDRS) $(ONEWIREOBJS) $(ONEWIREHDRS) $(DS9097UOBJS)
+	$(CC) $(OBJS) $(ONEWIREOBJS) $(DS9097UOBJS) -o digitemp_DS9097U $(LIBS)
 
-ds2490:		$(OBJS) $(HDRS) $(ONEWIREOBJS) $(ONEWIREHDRS) $(DS2490OBJS)
-		$(CC) $(OBJS) $(ONEWIREOBJS) $(DS2490OBJS) -o digitemp_DS2490 $(LIBS)
+ds2490:	$(OBJS) $(HDRS) $(ONEWIREOBJS) $(ONEWIREHDRS) $(DS2490OBJS)
+	$(CC) $(OBJS) $(ONEWIREOBJS) $(DS2490OBJS) -o digitemp_DS2490 $(LIBS)
 
 
 # Clean up the object files and the sub-directory for distributions
 clean:
-		rm -f *~ src/*~ userial/*~ userial/ds9097/*~ userial/ds9097u/*~ userial/ds2490/*~
-		rm -f $(OBJS) $(ONEWIREOBJS) $(DS9097OBJS) $(DS9097UOBJS) $(DS2490OBJS)
-		rm -f core *.asc 
-		rm -f perl/*~ rrdb/*~ .digitemprc digitemp-$(VERSION)-1.spec
-		rm -rf digitemp-$(VERSION)
+	rm -f *~ src/*~ userial/*~ userial/ds9097/*~ userial/ds9097u/*~ userial/ds2490/*~
+	rm -f $(OBJS) $(ONEWIREOBJS) $(DS9097OBJS) $(DS9097UOBJS) $(DS2490OBJS)
+	rm -f core *.asc 
+	rm -f perl/*~ rrdb/*~ .digitemprc digitemp-$(VERSION)-1.spec
+	rm -rf digitemp-$(VERSION)
 
 # Sign the binaries using gpg (www.gnupg.org)
 # My key is available from www.brianlane.com
 sign:
-		gpg -ba digitemp_DS*
-		echo
+	gpg -ba digitemp_DS*
+	echo
 
 # Install digitemp into /usr/local/bin
-install:	digitemp
-		install -b -o root -g bin digitemp /usr/local/bin
+install:digitemp
+	install -b -o root -g bin digitemp /usr/local/bin
 
 # Build the archive of everything
-archive:	clean
-		cd .. && tar --exclude *.o --exclude .svn -cvzf digitemp-$(VERSION).tar.gz digitemp-$(VERSION)/* 
+archive:clean
+	cd .. && tar --exclude *.o --exclude .svn -cvzf digitemp-$(VERSION).tar.gz digitemp-$(VERSION)/* 
 
 # Build the source distribution
-source:		archive
+source:	archive
 
-dist:		ds9097 ds9097u ds2490 sign archive
+dist:	ds9097 ds9097u ds2490 sign archive
 
-dist_ds9097:	ds9097 sign archive
-		cd .. && mv digitemp-$(VERSION).tar.gz digitemp-$(VERSION)-ds9097.tar.gz
+dist_ds9097:ds9097 sign archive
+	cd .. && mv digitemp-$(VERSION).tar.gz digitemp-$(VERSION)-ds9097.tar.gz
 
-dist_ds9097u:	ds9097u sign archive
-		cd .. && mv digitemp-$(VERSION).tar.gz digitemp-$(VERSION)-ds9097u.tar.gz
+dist_ds9097u:ds9097u sign archive
+	cd .. && mv digitemp-$(VERSION).tar.gz digitemp-$(VERSION)-ds9097u.tar.gz
 
-dist_ds2490:	ds2490 sign archive
-		cd .. && mv digitemp-$(VERSION).tar.gz digitemp-$(VERSION)-ds2490.tar.gz
+dist_ds2490:ds2490 sign archive
+	cd .. && mv digitemp-$(VERSION).tar.gz digitemp-$(VERSION)-ds2490.tar.gz
