@@ -2583,16 +2583,16 @@ int main(int argc, char *argv[]){
 	}
 
 #ifndef OWUSB
-	/* Check to see if the device file actually exists */
+	// Check to see if the device file actually exists
 	if( !file_exists( serial_port ) )
 	{
 		fprintf( stderr, "Error, serial port '%s' does not exists!\n", serial_port );
-
-		if( sensor_list.roms != NULL )
-			free( sensor_list.roms );
-
-		if( couplerDS_top != NULL )
-			free_coupler_ds2409(1);
+		// 2014-10-19 DRJ:	sensor_list has changed to global_sensor_list
+		//		couplerDS_top is no longer used
+		//		allocated variables are now: global_roms_list, global_sensor_list, and global_coupler_list
+		if(global_roms_list != NULL) free(global_roms_list);
+		if(global_sensor_list != NULL) free(global_sensor_list);
+		if(global_coupler_list != NULL) free(global_coupler_list);
 
 		exit(EXIT_NOPORT);
 	}
@@ -2600,13 +2600,9 @@ int main(int argc, char *argv[]){
 	/* Check to make sure we have permission to access the port */
 	if( access( serial_port, R_OK|W_OK ) < 0 ) {
 		fprintf( stderr, "Error, you don't have +rw permission to access serial port: %s\n", serial_port );
-
-		if( sensor_list.roms != NULL )
-			free( sensor_list.roms );
-
-		if( couplerDS_top != NULL )
-			free_coupler_ds2409(1);
-
+		if(global_roms_list != NULL) free(global_roms_list);
+		if(global_sensor_list != NULL) free(global_sensor_list);
+		if(global_coupler_list != NULL) free(global_coupler_list);
 		exit(EXIT_NOPERM);
 	}
 
@@ -2618,12 +2614,12 @@ int main(int argc, char *argv[]){
 	if( !(p = strrchr( serial_port, '/' )) )
 	{
 		fprintf( stderr, "Error getting serial device from %s\n", serial_port );
-
-		if( sensor_list.roms != NULL )
-			free( sensor_list.roms );
-
-		if( couplerDS_top != NULL )
-			free_coupler_ds2409(1);
+		// 2014-10-19 DRJ:	sensor_list has changed to global_sensor_list
+		//		couplerDS_top is no longer used
+		//		allocated variables are now: global_roms_list, global_sensor_list, and global_coupler_list
+		if(global_roms_list != NULL) free(global_roms_list);
+		if(global_sensor_list != NULL) free(global_sensor_list);
+		if(global_coupler_list != NULL) free(global_coupler_list);
 
 		exit(EXIT_DEVERR);
 	}
@@ -2637,12 +2633,9 @@ int main(int argc, char *argv[]){
 		} else {
 			fprintf( stderr, "Error, %s is locked by process %d\n", serial_dev, pid );
 		}
-
-		if( sensor_list.roms != NULL )
-			free( sensor_list.roms );
-
-		if( couplerDS_top != NULL )
-			free_coupler_ds2409(1);
+		if(global_roms_list != NULL) free(global_roms_list);
+		if(global_sensor_list != NULL) free(global_sensor_list);
+		if(global_coupler_list != NULL) free(global_coupler_list);
 
 		exit(EXIT_LOCKED);
 	}
