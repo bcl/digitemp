@@ -18,26 +18,25 @@
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
 
-     digitemp -w                        Walk the LAN & show all
-     digitemp -i			Initalize .digitemprc file
-     digitemp -I                        Initialize .digitemprc w/sorted serial #s
-     digitemp -s/dev/ttyS0		Set serial port (required)
-     digitemp -cdigitemp.conf		Configuration File
-     digitemp -r1000			Set Read timeout to 1000mS
-     digitemp -l/var/log/temperature	Send output to logfile
-     digitemp -v			Verbose mode
-     digitemp -t0			Read Temperature
-     digitemp -q                        Quiet, no copyright banner
-     digitemp -a			Read all Temperatures
-     digitemp -d5                       Delay between samples (in sec.)
-     digitemp -n50                      Number of times to repeat. 0=forever
-     digitemp -A                        Treat DS2438 as A/D converter
-     digitemp -o1                       Output format for logfile
-	  digitemp -p10000						window in us between Lan calls
-                                        See description below
-     digitemp -o"output format string"  See description below
-     digitemp -O"counter format"        See description below
-     digitemp -H"Humidity format"       See description below
+			digitemp -w											Walk the LAN & show all
+			digitemp -i											Initalize .digitemprc file
+			digitemp -I											Initialize .digitemprc w/sorted serial #s
+			digitemp -s/dev/ttyS0						Set serial port (required)
+			digitemp -cdigitemp.conf				Configuration File
+			digitemp -r1000									Set Read timeout to 1000mS
+			digitemp -l/var/log/temperature	Send output to logfile
+			digitemp -v											Verbose mode
+			digitemp -t0										Read Temperature
+			digitemp -q											Quiet, no copyright banner
+			digitemp -a											Read all Temperatures
+			digitemp -d5										Delay between samples (in sec.)
+			digitemp -n50										Number of times to repeat. 0=forever
+			digitemp -A											Treat DS2438 as A/D converter
+			digitemp -o1										Output format for logfile
+			digitemp -p10000								window in us between Lan calls
+			digitemp -o"output format string"	See description below
+			digitemp -O"counter format"				See description below
+			digitemp -H"Humidity format"			See description below
 
      Logfile formats:
      1 = (default) - 1 line per sensor, time, C, F
@@ -58,6 +57,10 @@
 
    =======================================================================
    See ChangeLog file for history of changes
+   -----------------------------------------------------------------------*/
+/* ---------------------------------------------------------------------
+	Notes while modifying v3.6.0 into v3.6.0_DRJ
+	
    	2014-08-16: DRJ
    		1) While reading temperatures, occationally getting the following errors:
    			ERROR: ownet.c owAccess() SerialNum does not match.
@@ -122,8 +125,6 @@
    		owTouchReset located in usblnk.c.  This meathod will often
    		not work if the code is run without outputting to the terminal.  The fault
    		is with not "zeroing" the buffer.  It is now zeroed useing memset.
-   		Also, incorrect byte is looked at for determining error.
-   		Was byte 0x10, but now is byte 0x00.
 
 		2014-06-29: DRJ
 		 libusb 1.0 meathods used:
