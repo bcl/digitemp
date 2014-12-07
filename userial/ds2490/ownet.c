@@ -54,23 +54,6 @@ static SMALLINT LastFamilyDiscrepancy[MAX_PORTNUM];
 static SMALLINT LastDevice[MAX_PORTNUM];
 uchar SerialNum[MAX_PORTNUM][8];
 
-
-
-void printSN_ownet( unsigned char *TempSN, int crlf ){
-  int y;
-
-  /* Print the serial number */
-  for(y = 0; y < 8; y++){
-    printf("%02X", TempSN[y] );
-  }
-  if(crlf)
-    printf("\n");
-}
-
-
-
-	
-
 //--------------------------------------------------------------------------
 // The 'owFirst' finds the first device on the 1-Wire Net  This function
 // contains one parameter 'alarm_only'.  When
@@ -92,18 +75,17 @@ void printSN_ownet( unsigned char *TempSN, int crlf ){
 //
 SMALLINT owFirst(int portnum, SMALLINT do_reset, SMALLINT alarm_only)
 {
-	SMALLINT retVal;
-	// reset the search state
-	LastDiscrepancy[portnum] = 0;
-	LastDevice[portnum] = FALSE;
-	LastFamilyDiscrepancy[portnum] = 0;
-	retVal = owNext(portnum,do_reset,alarm_only);
-	return retVal;
+   // reset the search state
+   LastDiscrepancy[portnum] = 0;
+   LastDevice[portnum] = FALSE;
+   LastFamilyDiscrepancy[portnum] = 0;
+
+   return owNext(portnum,do_reset,alarm_only);
 }
 
 //--------------------------------------------------------------------------
 // The 'owNext' function does a general search.  This function
-// continues from the previous search state. The search state
+// continues from the previos search state. The search state
 // can be reset by using the 'owFirst' function.
 // This function contains one parameter 'alarm_only'.
 // When 'alarm_only' is TRUE (1) the find alarm command
@@ -124,121 +106,131 @@ SMALLINT owFirst(int portnum, SMALLINT do_reset, SMALLINT alarm_only)
 //                       last search was the last device or there
 //                       are no devices on the 1-Wire Net.
 //
-SMALLINT owNext(int portnum, SMALLINT do_reset, SMALLINT alarm_only){
-	uchar bit_test, search_direction, bit_number;
-	uchar last_zero, serial_byte_number, next_result;
-	uchar serial_byte_mask;
-	uchar lastcrc8=0;
+SMALLINT owNext(int portnum, SMALLINT do_reset, SMALLINT alarm_only)
+{
+   uchar bit_test, search_direction, bit_number;
+   uchar last_zero, serial_byte_number, next_result;
+   uchar serial_byte_mask;
+   uchar lastcrc8=0;
 
-	// initialize for search
-	bit_number = 1;
-	last_zero = 0;
-	serial_byte_number = 0;
-	serial_byte_mask = 1;
-	next_result = 0;
-	setcrc8(portnum,0);
+   // initialize for search
+   bit_number = 1;
+   last_zero = 0;
+   serial_byte_number = 0;
+   serial_byte_mask = 1;
+   next_result = 0;
+   setcrc8(portnum,0);
 
-	// if the last call was not the last one
-	if(!LastDevice[portnum]){
-			// check if reset first is requested
-			if (do_reset){
-				// reset the 1-wire
-				// if there are no parts on 1-wire, return FALSE
-				if (!owTouchReset(portnum)){
-						fprintf(stderr,"owTouchReset failed\r\n");
-						// reset the search
-						LastDiscrepancy[portnum] = 0;
-						LastFamilyDiscrepancy[portnum] = 0;
-						OWERROR(OWERROR_NO_DEVICES_ON_NET);
-						return FALSE;
-				}
-			}
+   // if the last call was not the last one
+   if (!LastDevice[portnum])
+   {
+      // check if reset first is requested
+      if (do_reset)
+      {
+         // reset the 1-wire
+         // if there are no parts on 1-wire, return FALSE
+         if (!owTouchReset(portnum))
+         {
+            // printf("owTouchReset failed\r\n");
+            // reset the search
+            LastDiscrepancy[portnum] = 0;
+            LastFamilyDiscrepancy[portnum] = 0;
+            OWERROR(OWERROR_NO_DEVICES_ON_NET);
+            return FALSE;
+         }
+      }
 
-			// If finding alarming devices issue a different command
-			if (alarm_only)
-				 owWriteByte(portnum,0xEC);  // issue the alarming search command
-			else
-				 owWriteByte(portnum,0xF0);  // issue the search command
+      // If finding alarming devices issue a different command
+      if (alarm_only)
+         owWriteByte(portnum,0xEC);  // issue the alarming search command
+      else
+         owWriteByte(portnum,0xF0);  // issue the search command
 
-			//pause before beginning the search
-			//usDelay(100);
+      //pause before beginning the search
+      //usDelay(100);
 
-			// loop to do the search
-			do {
-				// read a bit and its compliment
-				bit_test = owTouchBit(portnum,1) << 1;
-				bit_test |= owTouchBit(portnum,1);
+      // loop to do the search
+      do
+      {
+         // read a bit and its compliment
+         bit_test = owTouchBit(portnum,1) << 1;
+         bit_test |= owTouchBit(portnum,1);
 
-				// check for no devices on 1-wire
-				if (bit_test == 3)
-					break;
-				else {
-					// all devices coupled have 0 or 1
-					if (bit_test > 0)
-						search_direction = !(bit_test & 0x01);  // bit write value for search
-					else {
-						// if this discrepancy if before the Last Discrepancy
-						// on a previous next then pick the same as last time
-						if (bit_number < LastDiscrepancy[portnum])
-							search_direction = ((SerialNum[portnum][serial_byte_number] & serial_byte_mask) > 0);
-						else
-							// if equal to last pick 1, if not then pick 0
-							search_direction = (bit_number == LastDiscrepancy[portnum]);
+         // check for no devices on 1-wire
+         if (bit_test == 3)
+            break;
+         else
+         {
+            // all devices coupled have 0 or 1
+            if (bit_test > 0)
+              search_direction = !(bit_test & 0x01);  // bit write value for search
+            else
+            {
+               // if this discrepancy if before the Last Discrepancy
+               // on a previous next then pick the same as last time
+               if (bit_number < LastDiscrepancy[portnum])
+                  search_direction = ((SerialNum[portnum][serial_byte_number] & serial_byte_mask) > 0);
+               else
+                  // if equal to last pick 1, if not then pick 0
+                  search_direction = (bit_number == LastDiscrepancy[portnum]);
 
-						// if 0 was picked then record its position in LastZero
-						if (search_direction == 0)
-							last_zero = bit_number;
+               // if 0 was picked then record its position in LastZero
+               if (search_direction == 0)
+                  last_zero = bit_number;
 
-						// check for Last discrepancy in family
-						if (last_zero < 9)
-							LastFamilyDiscrepancy[portnum] = last_zero;
-					}
+               // check for Last discrepancy in family
+               if (last_zero < 9)
+                  LastFamilyDiscrepancy[portnum] = last_zero;
+            }
 
-					// set or clear the bit in the SerialNum[portnum] byte serial_byte_number
-					// with mask serial_byte_mask
-					if (search_direction == 1)
-						SerialNum[portnum][serial_byte_number] |= serial_byte_mask;
-					else
-						SerialNum[portnum][serial_byte_number] &= ~serial_byte_mask;
+            // set or clear the bit in the SerialNum[portnum] byte serial_byte_number
+            // with mask serial_byte_mask
+            if (search_direction == 1)
+              SerialNum[portnum][serial_byte_number] |= serial_byte_mask;
+            else
+              SerialNum[portnum][serial_byte_number] &= ~serial_byte_mask;
 
-					// serial number search direction write bit
-					owTouchBit(portnum,search_direction);
+            // serial number search direction write bit
+            owTouchBit(portnum,search_direction);
 
-					// increment the byte counter bit_number
-					// and shift the mask serial_byte_mask
-					bit_number++;
-					serial_byte_mask <<= 1;
+            // increment the byte counter bit_number
+            // and shift the mask serial_byte_mask
+            bit_number++;
+            serial_byte_mask <<= 1;
 
-					// if the mask is 0 then go to new SerialNum[portnum] byte serial_byte_number
-					// and reset mask
-					if (serial_byte_mask == 0){
-						lastcrc8 = docrc8(portnum,SerialNum[portnum][serial_byte_number]);  // accumulate the CRC
-						serial_byte_number++;
-						serial_byte_mask = 1;
-					}
-				}
-			}	// search do loop
-			while(serial_byte_number < 8);  // loop until through all SerialNum[portnum] bytes 0-7
+            // if the mask is 0 then go to new SerialNum[portnum] byte serial_byte_number
+            // and reset mask
+            if (serial_byte_mask == 0)
+            {
+                lastcrc8 = docrc8(portnum,SerialNum[portnum][serial_byte_number]);  // accumulate the CRC
+                serial_byte_number++;
+                serial_byte_mask = 1;
+            }
+         }
+      }
+      while(serial_byte_number < 8);  // loop until through all SerialNum[portnum] bytes 0-7
 
-			// if the search was successful then
-			if (!((bit_number < 65) || lastcrc8)){
-				// search successful so set LastDiscrepancy[portnum],LastDevice[portnum],next_result
-				LastDiscrepancy[portnum] = last_zero;
-				LastDevice[portnum] = (LastDiscrepancy[portnum] == 0);
-				next_result = TRUE;
-			}
-	}
+      // if the search was successful then
+      if (!((bit_number < 65) || lastcrc8))
+      {
+         // search successful so set LastDiscrepancy[portnum],LastDevice[portnum],next_result
+         LastDiscrepancy[portnum] = last_zero;
+         LastDevice[portnum] = (LastDiscrepancy[portnum] == 0);
+         next_result = TRUE;
+      }
+   }
 
-	// if no device found then reset counters so next 'next' will be
-	// like a first
-	if(!next_result || !SerialNum[portnum][0]){
-		LastDiscrepancy[portnum] = 0;
-		LastDevice[portnum] = FALSE;
-		LastFamilyDiscrepancy[portnum] = 0;
-		next_result = FALSE;
-	}
+   // if no device found then reset counters so next 'next' will be
+   // like a first
+   if (!next_result || !SerialNum[portnum][0])
+   {
+      LastDiscrepancy[portnum] = 0;
+      LastDevice[portnum] = FALSE;
+      LastFamilyDiscrepancy[portnum] = 0;
+      next_result = FALSE;
+   }
 
-	return next_result;
+   return next_result;
 }
 
 //--------------------------------------------------------------------------
@@ -328,51 +320,44 @@ void owSkipFamily(int portnum)
 //            FALSE (0): reset does not indicate presence or echos 'writes'
 //                       are not correct.
 //
-SMALLINT owAccess(int portnum){
-	int retVal;
-	uchar sendpacket[9];
-	uchar i;
+SMALLINT owAccess(int portnum)
+{
+   uchar sendpacket[9];
+   uchar i;
 
-	// reset the 1-wire
-	if (owTouchReset(portnum)){
-		// create a buffer to use with block function
-		// match Serial Number command 0x55
-		sendpacket[0] = 0x55;
-		// Serial Number
-		for (i = 1; i < 9; i++)
-			sendpacket[i] = SerialNum[portnum][i-1];
+   // reset the 1-wire
+   if (owTouchReset(portnum))
+   {
+      // create a buffer to use with block function
+      // match Serial Number command 0x55
+      sendpacket[0] = 0x55;
+      // Serial Number
+      for (i = 1; i < 9; i++)
+         sendpacket[i] = SerialNum[portnum][i-1];
 
-		// send/recieve the transfer buffer
-		retVal = owBlock(portnum,FALSE,sendpacket,9);
-		if (retVal){
-			// verify that the echo of the writes was correct
-			for (i = 1; i < 9; i++)
-				if (sendpacket[i] != SerialNum[portnum][i-1]) {
-					fprintf(stderr, "ERROR: ownet.c owAccess() SerialNum does not match. Sent=");
-					printSN_ownet(SerialNum[portnum],0);
-					printf(" Recieved=");
-					printSN_ownet(sendpacket,1);
-					return FALSE;
-				}
-			if (sendpacket[0] != 0x55){
-				fprintf(stderr, "ERROR: ownet.c owAccess() Write verify failed.\n");
-				OWERROR(OWERROR_WRITE_VERIFY_FAILED);
-				return FALSE;
-			}
-			else
-				return TRUE;
-		}
-		else {
-			fprintf(stderr, "ERROR: ownet.c owAccess() Block failed.\n");
-			OWERROR(OWERROR_BLOCK_FAILED);
-		}
-	}	else {
-		fprintf(stderr, "ERROR: ownet.c owAccess() No Devices on Net.\n");
-		OWERROR(OWERROR_NO_DEVICES_ON_NET);
-	}
+      // send/recieve the transfer buffer
+      if (owBlock(portnum,FALSE,sendpacket,9))
+      {
+         // verify that the echo of the writes was correct
+         for (i = 1; i < 9; i++)
+            if (sendpacket[i] != SerialNum[portnum][i-1])
+               return FALSE;
+         if (sendpacket[0] != 0x55)
+         {
+            OWERROR(OWERROR_WRITE_VERIFY_FAILED);
+            return FALSE;
+         }
+         else
+            return TRUE;
+      }
+      else
+         OWERROR(OWERROR_BLOCK_FAILED);
+   }
+   else
+      OWERROR(OWERROR_NO_DEVICES_ON_NET);
 
-	// reset or match echo failed
-	return FALSE;
+   // reset or match echo failed
+   return FALSE;
 }
 
 //----------------------------------------------------------------------

@@ -1,5 +1,4 @@
 //---------------------------------------------------------------------------
-// usbses.c
 // Copyright (C) 2001 Matthew Dharm, All Rights Reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -28,28 +27,32 @@
 //
 //  Version: 3.00B
 // 
-/*	DRJ Modifications:
- |	2013-07-28
- |		moved from libusb0.1 to libusb1.0 in the hopes of more reliability
- |	70	usb_dev_handle		->	libusb_device_handle
- |	87	usb_init					->	libusb_init
- |	88	usb_set_debug			->	libusb_set_debug
- |	89	usb_find_busses		->	
- |	90	usb_find_devices	->	
- |		Oh well!  same problems as before.
- |		The problems ended up being with owTouchReset()
- */
 
-#define DEBUG_USB 1
-#define DEBUG_TIME 0
-
+/* 
+	2014-12-06: DRJ	usb_ds2490_init() now returns 0 upon success, error code otherwise
+	2014-12-06: DRJ	moved from libisb v0.1 to libusb v1.0
+		usb_dev_handle	->	libusb_device_handle
+		usb_device -> libusb_device
+		usb_init					->	libusb_init
+		usb_set_debug			->	libusb_set_debug
+		usb_find_busses		->	
+ 		usb_find_devices	->	
+ 		usb_open				->	libusb_open
+ 		usb_set_configuration	->	libusb_set_configuration
+ 		usb_claim_interface	-> libusb_claim_interface
+ 		usb_set_altinterface -> libusb_set_altinterface
+ 		usb_strerror			-> fprintf to stderr
+		usb_close -> libusb_close
+		usb_release_interface ->	libusb_release_interface
+		
+		You will need to install libusb1.0.
+		In Ubuntu this would be:	sudo apt-get install libusb-1.0
+*/
 
 #include "ownet.h"
 #include <libusb-1.0/libusb.h>
 #include <string.h>
-#include <sys/time.h>	//for struct timeval
 #include "digitemp.h"
-#include "DRJ_digitemp.h"
 
 
 SMALLINT owAcquire(int,char *, char *);
@@ -58,8 +61,6 @@ static int usb_ds2490_init(void);
 
 struct libusb_device_handle *usb_dev_handle_list[MAX_PORTNUM];
 struct libusb_device *usb_dev_list[MAX_PORTNUM];
-
-
 int usb_num_devices = -1;
 int initted_flag = 0;
 
@@ -124,47 +125,50 @@ int usb_ds2490_init(void) {
 //
 // Returns: TRUE - success, port opened
 //
-SMALLINT owAcquire(int portnum, char *port_zstr, char *return_msg){
+SMALLINT owAcquire(int portnum, char *port_zstr, char *return_msg)
+{
 	int retValue;
 	if (!initted_flag)
 		usb_ds2490_init();
 	
-	// check the port string
+	/* check the port string */
 	if (strcmp (port_zstr, "USB")) {
 		strcpy(return_msg, "owAcquire called with invalid port string\n");
-	  return 0;
+	      	return 0;
 	}
 	
-	// check to see if the portnumber is valid
+	/* check to see if the portnumber is valid */
 	if (usb_num_devices < portnum) {
 		strcpy(return_msg, "Attempted to select invalid port number\n");
 		return FALSE;
 	}
 
-	// check to see if opening the device is valid
+	/* check to see if opening the device is valid */
 	if (usb_dev_handle_list[portnum] != NULL) {
 		strcpy(return_msg, "Device allready open\n");
 		return FALSE;
 	}
 
-	// open the device
+	/* open the device */
 	retValue = libusb_open(usb_dev_list[portnum], usb_dev_handle_list);		// is usb_dev_handle_list populated with all device handles?
-
-	// if the kernel driver is attached, detach it
-  if(libusb_kernel_driver_active(usb_dev_handle_list[portnum], 0) == 1) { //find out if kernel driver is attached
-		printf("Kernel Driver Active\n");
-    if(libusb_detach_kernel_driver(usb_dev_handle_list[portnum], 0) == 0) //detach it
-    {
-			printf("Kernel Driver Has been succesfully detatched\n");
-	  }
-	  else
-	  {
-	  	fprintf(stderr,"ERR: owAcquire() Could not detatch kernel driver.\n");
-	  	return FALSE;
-	  }
+	if (usb_dev_handle_list[portnum] == NULL) {
+		strcpy(return_msg, "Failed to open usb device\n");
+		fprintf(stderr,"ERR: owAcquire() Failed to open the usb device.\n");
+		return FALSE;
 	}
 
-	// set the configuration
+	// if the kernel driver is attached, detach it ... should this happen befor trying to open the device?
+	if(libusb_kernel_driver_active(usb_dev_handle_list[portnum], 0) == 1) { //find out if kernel driver is attached
+		printf("Kernel Driver Active\n");
+		if(libusb_detach_kernel_driver(usb_dev_handle_list[portnum], 0) == 0) { //detach it
+			printf("Kernel Driver Has been succesfully detatched\n");
+		} else {
+			fprintf(stderr,"ERR: owAcquire() Could not detatch kernel driver.\n");
+			return FALSE;
+		}
+	}
+
+	/* set the configuration */
 	retValue = libusb_set_configuration(usb_dev_handle_list[portnum], 1);
 	if (retValue != 0) {
 		strcpy(return_msg, "Failed to set configuration\n");
@@ -173,19 +177,18 @@ SMALLINT owAcquire(int portnum, char *port_zstr, char *return_msg){
 		return FALSE;
 	}
 
-	// claim the interface
+	/* claim the interface */
 	retValue = libusb_claim_interface(usb_dev_handle_list[portnum], 0);
-	if (retValue) {							//why is the interface number = 0?
+	if (retValue != 0) {							//why is the interface number = 0?
 		strcpy(return_msg, "Failed to claim interface\n");
 		fprintf(stderr,"ERROR: usbses.c owAcquire() Failed to claim interface.\n");
-
 		libusb_close(usb_dev_handle_list[portnum]);
 		return FALSE;
 	}
 
-	// set the alt interface
+	/* set the alt interface */
 	retValue = libusb_set_interface_alt_setting(usb_dev_handle_list[portnum], 0, 3);	//why is the interface number = 0?
-	if(retValue) {
+	if(retValue != 0) {
 		strcpy(return_msg, "Failed to set altinterface\n");
 		fprintf(stderr,"ERROR: usbses.c owAcquire() Failed to set altinterface.\n");
 		libusb_release_interface(usb_dev_handle_list[portnum], 0);								//why is the interface number = 0?
@@ -193,10 +196,10 @@ SMALLINT owAcquire(int portnum, char *port_zstr, char *return_msg){
 		return FALSE;
 	}
 
-	// we're all set here!
+	/* we're all set here! */
 	strcpy(return_msg, "DS2490 successfully acquired by USB driver\n");
 	return TRUE;
-}	// owAcquire()
+}
 
 //---------------------------------------------------------------------------
 // Release the previously acquired a 1-Wire net.
@@ -205,11 +208,12 @@ SMALLINT owAcquire(int portnum, char *port_zstr, char *return_msg){
 //                indicate the symbolic port number.
 // 'return_msg' - zero terminated return message. 
 //
-void owRelease(int portnum, char *return_msg){
-	libusb_release_interface(usb_dev_handle_list[portnum], 0);
+void owRelease(int portnum, char *return_msg)
+{
+	libusb_release_interface(usb_dev_handle_list[portnum], 0);								//why is the interface number = 0?
 	libusb_close(usb_dev_handle_list[portnum]);
 	usb_dev_handle_list[portnum] = NULL;
-	strcpy(return_msg, "DS2490 successfully released by USB driver.\n");
+	strcpy(return_msg, "DS2490 successfully released by USB driver\n");
 }
 
 

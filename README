@@ -411,20 +411,6 @@ and I will add it to the list at http://www.digitemp.com/users.shtml
 
 Release notes
 -------------
-	Version 3.6.0_DRJ	Modified by DRJ...
-		Now hubs (or couplers) can be nested
-		support for HobbyBoard 4ch hub
-		DS2490 is more reliable
-		minimum time between LAN calls is enforcable
-	You may have to tell your operating system to not use the DS2490.
-	For example, in Ubuntu add this to /etc/modprobe.d/blacklist.conf
-		# 1-wire interface
-		blacklist ds2490
-	Also, you will need libusb1.0.  Again in Ubuntu this would be:
-		sudo apt-get install libusb-1.0
-	Finally, you will likely have to have root privileges to access the DS2490.
-	
-	
   Version 3.6.0 adds ...
 
   Version 3.5.0 adds DS1923 Hygrochron support, fixes some small bugs in the

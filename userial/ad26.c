@@ -392,11 +392,16 @@ int PIO_Reading(int portnum, int pionum /* TS ignored so far */ )
             setcrc16(portnum,0);
             for(i=0;i<send_cnt;i++) {
 		        lastcrc16 = docrc16(portnum,send_block[i]);
+		        // DEBUG:
+		        // printf("  crc[%i]: %02x -> %04x (~%04x)\n", i, send_block[i], lastcrc16, lastcrc16 ^0xffff);
 		    }
 
 	        lastcrc16 ^= owReadByte(portnum);		// CRC16, lsb
 	        lastcrc16 ^= (owReadByte(portnum) << 8);	// CRC16, msb
 	        lastcrc16 ^= 0xffff;
+
+	        // DEBUG:
+	        // printf("  crc: %04x (~%04x)\n", lastcrc16, lastcrc16 ^0xffff);
 
 		    if(lastcrc16 != 0x0000) {
 			    printf("DS2406 crc error\n");

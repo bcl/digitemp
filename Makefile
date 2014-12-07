@@ -6,9 +6,7 @@
 #
 # Please note that this Makefile *needs* GNU make. BSD make won't do.
 #
-# To disable Lockfile support on Linux, change LOCK to no
-#
-#	Added DRJ_digitemp.c to aid in faster compile times
+# To disable Lockfile support on Linux, chenage LOCK to no
 #
 
 VERSION = 3.6.0
@@ -16,8 +14,8 @@ VERSION = 3.6.0
 CC	= gcc
 CFLAGS	= -I./src -I./userial -O2 -Wall # -g
 
-OBJS		=	src/digitemp.o src/device_name.o src/ds2438.o  src/DRJ_digitemp.o
-HDRS		= 	src/digitemp.h src/device_name.h src/DRJ_digitemp.h
+OBJS		=	src/digitemp.o src/device_name.o src/ds2438.o
+HDRS		= 	src/digitemp.h src/device_name.h
 
 # Common userial header/source
 HDRS		+=	userial/ownet.h userial/owproto.h userial/ad26.h \
@@ -97,6 +95,7 @@ endif
 # USB specific flags
 ds2490:  CFLAGS += -DOWUSB
 ds2490:  LIBS   += -L/usr/local/lib -lusb-1.0
+
 
 help:
 	@echo "  SYSTYPE = $(SYSTYPE)"

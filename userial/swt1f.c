@@ -84,7 +84,8 @@ int SetSwitch1F(int portnum, uchar *SerialNum, int Swtch, int NumExtra,
    int send_cnt,i,cmd;
    uchar send_block[50];
 
-   if(owAccess(portnum)){
+   if(owAccess(portnum))
+   {
       send_cnt = 0;
       // add the match command
       send_block[send_cnt++] = 0x55;
@@ -93,7 +94,8 @@ int SetSwitch1F(int portnum, uchar *SerialNum, int Swtch, int NumExtra,
          send_block[send_cnt++] = SerialNum[i];
 
       // the command
-      switch(Swtch){
+      switch(Swtch)
+      {
          case 0: // All lines off
             send_block[send_cnt++] = 0x66;
             cmd = 0x66;
@@ -137,7 +139,8 @@ int SetSwitch1F(int portnum, uchar *SerialNum, int Swtch, int NumExtra,
          send_block[send_cnt++] = 0xFF;
 
       // send the command string
-      if(owBlock(portnum,rst,send_block,send_cnt)){
+      if(owBlock(portnum,rst,send_block,send_cnt))
+      {
          // returned information for the info byte and command
          for(i=0; i<=NumExtra; i++)
             *(InfoByte+(NumExtra-i)) = send_block[send_cnt - (i+2)];
