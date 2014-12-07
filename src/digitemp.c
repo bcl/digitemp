@@ -291,7 +291,6 @@ int build_tf( char *time_format, char *format, int sensor,
 {
   char	*tf_ptr,
   	*lf_ptr,
-  	*lf_ptr2,
   	*tk_ptr,
   	token[80],
   	temp[80];
@@ -310,7 +309,6 @@ int build_tf( char *time_format, char *format, int sensor,
     } else {
       /* Found a token, decide if its one of ours... */
       /* save initial pointer, grab everything up to... */
-      lf_ptr2 = lf_ptr;
       tk_ptr = token;
 
       /* 
@@ -445,7 +443,6 @@ int build_cf( char *time_format, char *format, int sensor, int page,
 {
   char	*tf_ptr,
   	*lf_ptr,
-  	*lf_ptr2,
   	*tk_ptr,
   	token[80],
   	temp[80];
@@ -464,7 +461,6 @@ int build_cf( char *time_format, char *format, int sensor, int page,
     } else {
       /* Found a token, decide if its one of ours... */
       /* save initial pointer, grab everything up to... */
-      lf_ptr2 = lf_ptr;
       tk_ptr = token;
       
       /* Take numbers, astrix, period and letters */
@@ -836,16 +832,14 @@ int read_temperature( int sensor_family, int sensor )
   unsigned char lastcrc8,
                 scratchpad[30],    /* Scratchpad block from the sensor     */
                 TempSN[8];
-  int     x,
-          j,
+	int    j,
           try,                     /* Number of tries at reading device    */
-          strong_err,              /* Error with strong pullup?            */
+//          strong_err,              /* Error with strong pullup?            */
           ds1820_try,              /* Allow ds1820 glitch 1 time           */
           ds18s20_try;             /* Allow DS18S20 error 1 time           */
   float   temp_c,                  /* Calculated temperature in Centigrade */
           hi_precision;
 
-  x = 0;  
   ds1820_try = 0;
   ds18s20_try = 0;  
   temp_c = 0;
@@ -866,7 +860,7 @@ int read_temperature( int sensor_family, int sensor )
       /* Turn off the strong pullup */
       if( owLevel( 0, MODE_NORMAL ) != MODE_NORMAL )
       {
-        strong_err = 2;
+//        strong_err = 2;
       }
 
 

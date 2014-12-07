@@ -28,57 +28,91 @@
 //  Version: 3.00B
 // 
 
+/* 
+	2014-12-06: DRJ	usb_ds2490_init() now returns 0 upon success, error code otherwise
+	2014-12-06: DRJ	moved from libisb v0.1 to libusb v1.0
+		usb_dev_handle	->	libusb_device_handle
+		usb_device -> libusb_device
+		usb_init					->	libusb_init
+		usb_set_debug			->	libusb_set_debug
+		usb_find_busses		->	
+ 		usb_find_devices	->	
+ 		usb_open				->	libusb_open
+ 		usb_set_configuration	->	libusb_set_configuration
+ 		usb_claim_interface	-> libusb_claim_interface
+ 		usb_set_altinterface -> libusb_set_altinterface
+ 		usb_strerror			-> fprintf to stderr
+		usb_close -> libusb_close
+		usb_release_interface ->	libusb_release_interface
+		
+		You will need to install libusb1.0.
+		In Ubuntu this would be:	sudo apt-get install libusb-1.0
+*/
+
 #include "ownet.h"
-#include <usb.h>
+#include <libusb-1.0/libusb.h>
 #include <string.h>
 #include "digitemp.h"
 
 
 SMALLINT owAcquire(int,char *, char *);
 void owRelease(int,char *);
-static void usb_ds2490_init(void);
+static int usb_ds2490_init(void);
 
-struct usb_dev_handle *usb_dev_handle_list[MAX_PORTNUM];
-struct usb_device *usb_dev_list[MAX_PORTNUM];
+struct libusb_device_handle *usb_dev_handle_list[MAX_PORTNUM];
+struct libusb_device *usb_dev_list[MAX_PORTNUM];
 int usb_num_devices = -1;
 int initted_flag = 0;
 
 extern int opts;            // Command line options
 
 
-//---------------------------------------------------------------------------
+//
 // Initialize the DS2490
 //
-void usb_ds2490_init(void)
-{
-	struct usb_bus *bus;
-	struct usb_device *dev;
+
+int usb_ds2490_init(void) {
+	libusb_device **devs;
+	libusb_device *dev;
+	
+	int r;
+	ssize_t cnt;
+	int i = 0;
 
 	// initialize USB subsystem
-	usb_init();
-	usb_set_debug(0);
-	usb_find_busses();
-	usb_find_devices();
-
-      	//printf("bus/device  idVendor/idProduct\n");
-	for (bus = usb_busses; bus; bus = bus->next) {
-		for (dev = bus->devices; dev; dev = dev->next) {
-			//printf("%s/%s     %04X/%04X\n", bus->dirname, dev->filename,
-			//		dev->descriptor.idVendor, dev->descriptor.idProduct);
-			if (dev->descriptor.idVendor == 0x04FA &&
-					dev->descriptor.idProduct == 0x2490) {
-                ++usb_num_devices;
-				usb_dev_list[usb_num_devices] = dev;
-
-				if( !(opts & OPT_QUIET) )
-  				    printf("Found DS2490 device #%d at %s/%s\n", usb_num_devices + 1,
-						    bus->dirname, dev->filename);
+	r = libusb_init(NULL);		// using default context
+	if (r < 0){
+		fprintf(stderr,"ERROR:usb_ds2490_init() Failed to initialize the USB system\n");
+		return r;
+	}
+	libusb_set_debug(NULL, 3);		// LIBUSB_LOG_LEVEL_INFO = 3, but not defined in libusb-1.0-dev (1.0.8-r4)?
+	cnt = libusb_get_device_list(NULL, &devs);
+	if (cnt < 0) {
+		fprintf(stderr,"ERROR: usb_ds2490_init() Failed to get device list.\n");
+		return (int) cnt;
+	}
+	// step trough each of the devices found by libusb_get_device_list, looking for a device that we might care about
+	while ((dev = devs[i++]) != NULL) {
+		struct libusb_device_descriptor desc;
+		r = libusb_get_device_descriptor(dev, &desc);
+		if (r < 0) {
+			fprintf(stderr, "ERROR: usb_ds2490_init() Failed to get device descriptor");
+			return r;
+		}
+		if (desc.idVendor == 0x04FA && desc.idProduct == 0x2490) {
+			++usb_num_devices;
+			usb_dev_list[usb_num_devices] = dev;
+			if( !(opts & OPT_QUIET) ) {
+				int bus_no, device_address;
+				bus_no = libusb_get_bus_number(dev);
+				device_address = libusb_get_device_address(dev);
+				printf("Found DS2490 device #%d at %d/%d\n", usb_num_devices + 1,bus_no,device_address);
 			}
 		}
 	}
 
 	initted_flag = 1;
-
+	return 0;
 }
 
 //---------------------------------------------------------------------------
@@ -93,6 +127,7 @@ void usb_ds2490_init(void)
 //
 SMALLINT owAcquire(int portnum, char *port_zstr, char *return_msg)
 {
+	int retValue;
 	if (!initted_flag)
 		usb_ds2490_init();
 	
@@ -115,35 +150,49 @@ SMALLINT owAcquire(int portnum, char *port_zstr, char *return_msg)
 	}
 
 	/* open the device */
-	usb_dev_handle_list[portnum] = usb_open(usb_dev_list[portnum]);
+	retValue = libusb_open(usb_dev_list[portnum], usb_dev_handle_list);		// is usb_dev_handle_list populated with all device handles?
 	if (usb_dev_handle_list[portnum] == NULL) {
 		strcpy(return_msg, "Failed to open usb device\n");
-		printf("%s\n", usb_strerror());
+		fprintf(stderr,"ERR: owAcquire() Failed to open the usb device.\n");
 		return FALSE;
 	}
 
+	// if the kernel driver is attached, detach it ... should this happen befor trying to open the device?
+	if(libusb_kernel_driver_active(usb_dev_handle_list[portnum], 0) == 1) { //find out if kernel driver is attached
+		printf("Kernel Driver Active\n");
+		if(libusb_detach_kernel_driver(usb_dev_handle_list[portnum], 0) == 0) { //detach it
+			printf("Kernel Driver Has been succesfully detatched\n");
+		} else {
+			fprintf(stderr,"ERR: owAcquire() Could not detatch kernel driver.\n");
+			return FALSE;
+		}
+	}
+
 	/* set the configuration */
-	if (usb_set_configuration(usb_dev_handle_list[portnum], 1)) {
+	retValue = libusb_set_configuration(usb_dev_handle_list[portnum], 1);
+	if (retValue != 0) {
 		strcpy(return_msg, "Failed to set configuration\n");
-		printf("%s\n", usb_strerror());
-		usb_close(usb_dev_handle_list[portnum]);
+		fprintf(stderr,"ERROR: usbses.c owAcquire() Failed to set configuration, retValue=%i\n",retValue);
+		libusb_close(usb_dev_handle_list[portnum]);
 		return FALSE;
 	}
 
 	/* claim the interface */
-	if (usb_claim_interface(usb_dev_handle_list[portnum], 0)) {
+	retValue = libusb_claim_interface(usb_dev_handle_list[portnum], 0);
+	if (retValue != 0) {							//why is the interface number = 0?
 		strcpy(return_msg, "Failed to claim interface\n");
-		printf("%s\n", usb_strerror());
-		usb_close(usb_dev_handle_list[portnum]);
+		fprintf(stderr,"ERROR: usbses.c owAcquire() Failed to claim interface.\n");
+		libusb_close(usb_dev_handle_list[portnum]);
 		return FALSE;
 	}
 
 	/* set the alt interface */
-	if (usb_set_altinterface(usb_dev_handle_list[portnum], 3)) {
+	retValue = libusb_set_interface_alt_setting(usb_dev_handle_list[portnum], 0, 3);	//why is the interface number = 0?
+	if(retValue != 0) {
 		strcpy(return_msg, "Failed to set altinterface\n");
-		printf("%s\n", usb_strerror());
-		usb_release_interface(usb_dev_handle_list[portnum], 0);
-		usb_close(usb_dev_handle_list[portnum]);
+		fprintf(stderr,"ERROR: usbses.c owAcquire() Failed to set altinterface.\n");
+		libusb_release_interface(usb_dev_handle_list[portnum], 0);								//why is the interface number = 0?
+		libusb_close(usb_dev_handle_list[portnum]);
 		return FALSE;
 	}
 
@@ -161,8 +210,8 @@ SMALLINT owAcquire(int portnum, char *port_zstr, char *return_msg)
 //
 void owRelease(int portnum, char *return_msg)
 {
-	usb_release_interface(usb_dev_handle_list[portnum], 0);
-	usb_close(usb_dev_handle_list[portnum]);
+	libusb_release_interface(usb_dev_handle_list[portnum], 0);								//why is the interface number = 0?
+	libusb_close(usb_dev_handle_list[portnum]);
 	usb_dev_handle_list[portnum] = NULL;
 	strcpy(return_msg, "DS2490 successfully released by USB driver\n");
 }
