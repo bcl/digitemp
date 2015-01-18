@@ -94,7 +94,7 @@ endif
 
 # USB specific flags
 ds2490:  CFLAGS += -DOWUSB
-ds2490:  LIBS   += -lusb
+ds2490:  LIBS   += -L/usr/local/lib -lusb-1.0
 
 
 help:
