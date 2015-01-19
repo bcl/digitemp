@@ -32,21 +32,32 @@
 //           3.00 -> 3.10:  bcl	  Implemented strong pullup and program pulse
 //                                support that was keeping it from working
 //                                correctly using owWriteBytePower()
-// 
+/* 2014-12-06: DRJ	Zeroed buffer in owTouchReset()
+	2014-12-06: DRJ	New meathod getDeviceStatus()
+	2014-12-06: DRJ	moved from libisb v0.1.7 to libusb v1.0.16
+		usb_dev_handle	->	libusb_device_handle
+		usb_control_msg->	libusb_control_transfer
+		usb_bulk_read	->	libusb_bulk_transfer
+		usb_clear_halt ->	libusb_clear_halt
+*/
+
+
 #include "ownet.h"
-#include "usb.h"
+#include <libusb-1.0/libusb.h>
 #include <errno.h>
 #include <time.h>
 #include "usblnk.h"
+#include <string.h>
 
-/* wrap in Linux? */
+// wrap in Linux?
 #include <sys/time.h>
-/* Wrap in Linux? */
+// Wrap in Linux?
+
 
 #define TIMEOUT_VALUE	5000
 
 /* the structure we'll use to access other devices */
-extern struct usb_dev_handle *usb_dev_handle_list[MAX_PORTNUM];
+extern struct libusb_device_handle *usb_dev_handle_list[MAX_PORTNUM];
 
 // exportable link-level functions
 SMALLINT owTouchReset(int);
@@ -64,7 +75,83 @@ SMALLINT hasOverDrive(int);
 SMALLINT hasProgramPulse(int);
 SMALLINT owWriteBytePower(int,SMALLINT);
 SMALLINT owReadBitPower(int, SMALLINT);
+//SMALLINT getDeviceStatus(int);
 
+
+// returns TRUE if all is well
+// returns FALSE if there is an error.
+int getDeviceStatus(int portnum) {
+	// read what the current device has to offer and get the status
+	// look at byte 0x10
+	//		A value of 0x01 indicates an error with one of the following:
+	//		1-WIRE RESET did not reveal a Presence Pulse. SET
+	//		PATH command did not get a Presence Pulse from the
+	//		branch that was to be connected. No response from one
+	//		or more ROM ID bits during a SEARCH ACCESS
+	//		command.
+	//		if it is 0x00 all is well
+	//	state registers with sample values
+	// buffer = 00:01	SPUE	If set to 1, the strong pullup to 5V is enabled, if set to 0, it is disabled. 
+	//				01:00 current 1-Wire bus speed code
+	//				02:20 current pullup duration
+	//				03:40
+	//				04:05	current pulldown slew rate code
+	//				05:04	current Write-1 low time code
+	//				06:04	current data sample offset/ Write-0 recovery time code
+	//				07:00	test register
+	//				08:20	IDLE
+	//				09:43	communication command byte 1
+	//				0A:40	communication command byte 2
+	//				0B:00	communcationc command buffer status
+	//				0C:00	data out buffer status
+	//				0D:00	data in buffer status
+	//				0E:00	reserved
+	//				0F:00 reserved
+	//	result registers (from DS2490 Datasheet 19-4993; 10/09 page 31)
+	//				0x10 & 0x01	NRS 	No Repsonse Error
+	//				0x10 & 0x02	SH		Short Error
+	//				0x10 & 0x04	APP	Alarming Presence Pulse
+	//				0x10 & 0x08	0		
+	//				0x10 & 0x10	CMP	Compare Error
+	//				0x10 & 0x20	CRC	CRC Error	
+	//				0x10 & 0x40	RDP	READ REDIRECT PAGE
+	//				0x10 & 0x80	EOS	End Of Search???	
+	
+	//	Sometimes only 16 bytes are returned... is this because there is nothing more interesting to report?
+	//	Can we then assume that there is not problem (byte 17 is used to indicate an error).
+	int result; 
+	unsigned char buffer[0x20];
+	int transferred;		// number of bytes transferred using libusb_bulk_transfer
+
+	// zero the buffer before we use it!
+	memset(buffer,0,0x20);
+	// repeat until the unit is not idle
+	do {
+		/* get the status */
+
+		result = libusb_bulk_transfer(	usb_dev_handle_list[portnum], 
+													0x81,								//endpoint
+													buffer,							//data
+													0x20, 							//length
+													&transferred,					//transferred bytes
+													TIMEOUT_VALUE);				//timeout
+	} while (!(buffer[0x08] & 0x20) && !(result < 0));
+
+	if (transferred > 16) printf("DEBUG: getDeviceStatus() bytes transferred=%i\n",transferred);
+//	if (transferred < 17) printf("DEBUG: getDeviceStatus() bytes transferred=%i\n",transferred);
+
+	if (result < 0) {
+		fprintf(stderr,"ERROR: getDeviceStatus() result = %i\n",result);
+		return FALSE;
+	}
+
+	if (buffer[0x10] & 0x01) {
+		fprintf(stderr,"ERROR: getDeviceStatus() No Response\n");
+		return FALSE;
+	} else {
+		return TRUE;
+	}
+}
 //--------------------------------------------------------------------------
 // Reset all of the devices on the 1-Wire Net and return the result.
 //
@@ -77,33 +164,23 @@ SMALLINT owReadBitPower(int, SMALLINT);
 int owTouchReset(int portnum)
 {
 	int result; 
-	char buffer[0x20];
 
-	/* issue the 1-wire reset */
-	result = usb_control_msg(usb_dev_handle_list[portnum], 0x40,
-			COMM_CMD, 0x0043, 0x0000, NULL, 0x0, TIMEOUT_VALUE);
-	//printf("result is %d\n", result);
+	// issue the 1-wire reset (DS2490 Datasheet 19-4993; 10/09 page 21)
+	// DS2490 Datasheet 19-4993; 10/09 page 41 describes command 
+	//	PST = 1 continuously generate 1-Wire Reset sequences until a presence pulse is discovered. 
+	//	IM = 1 enables immediate execution of the command. Assumes that all 1-Wire device data required by the command has been received at EP2. 
+	result = libusb_control_transfer(	usb_dev_handle_list[portnum],	//dev_handle
+													0x40, 							//bmRequestTyp
+													COMM_CMD, 						//bRequest
+													0x4043, 							//wValue PST IM
+													0x0000, 							//wIndex
+													NULL,								//data
+													0x0, 								//wLength
+													TIMEOUT_VALUE);				//timeout
 
-	/* repeat until the unit is not idle */
-	do {
-		/* get the status */
-		result = usb_bulk_read(usb_dev_handle_list[portnum], 0x81,
-				buffer, 0x20, TIMEOUT_VALUE);
-		//printf("result is %d\n", result);
+	if(result != 0) fprintf(stderr,"ERROR: owTouchReset() libusb_control_transfer returned %i.\n",result);
 
-		//for (result = 0; result < 0x20; result++) {
-		//	printf("%02X: %02X\n", result, buffer[result]);
-		//}
-	} while (!(buffer[0x08] & 0x20) && !(result < 0));
-
-	if (result < 0)
-		return FALSE;
-
-	if (buffer[0x10] & 0x01) {
-		return FALSE;
-	} else {
-		return TRUE;
-	}
+	return getDeviceStatus(portnum);
 }
 
 //--------------------------------------------------------------------------
@@ -122,32 +199,23 @@ int owTouchReset(int portnum)
 int owTouchBit(int portnum, SMALLINT sendbit)
 {
 	int result; 
-	char retval;
-	char buffer[0x20];
+	unsigned char retval;
+	int transferred;		// number of bytes transferred using libusb_bulk_transfer
 
 	/* issue the bit i/o command */
-	result = usb_control_msg(usb_dev_handle_list[portnum], 0x40,
+	result = libusb_control_transfer(usb_dev_handle_list[portnum], 0x40,
 			COMM_CMD, 0x0021 | (sendbit << 3), 0x0000, NULL, 0x0, TIMEOUT_VALUE);
 	//printf("result is %d\n", result);
 
-	/* repeat until the unit is not idle */
-	do {
-		/* get the status */
-		result = usb_bulk_read(usb_dev_handle_list[portnum], 0x81,
-				buffer, 0x20, TIMEOUT_VALUE);
-		//printf("result is %d\n", result);
-
-		//for (result = 0; result < 0x20; result++) {
-		//	printf("%02X: %02X\n", result, buffer[result]);
-		//}
-	} while (!(buffer[0x08] & 0x20) && !(result < 0));
+	// read device and get device status
+	getDeviceStatus(portnum);
 
 	/* get the data */
-	result = usb_bulk_read(usb_dev_handle_list[portnum], 0x83,
-			&retval, 0x1, 1000);
+	result = libusb_bulk_transfer(usb_dev_handle_list[portnum], 0x83,
+			&retval, 0x1, &transferred, 1000);
 	if (result == -1) {
 		printf ("owTouchBit: clearing halt\n");
-		usb_clear_halt(usb_dev_handle_list[portnum], 0x83);
+		libusb_clear_halt(usb_dev_handle_list[portnum], 0x83);
 	}
 
 
@@ -170,32 +238,33 @@ int owTouchBit(int portnum, SMALLINT sendbit)
 int owTouchByte(int portnum, SMALLINT sendbyte)
 {
 	int result; 
-	char retval;
-	char buffer[0x20];
+	unsigned char retval;
+	int transferred;		// number of bytes transferred using libusb_bulk_transfer
 
 	/* issue the byte i/o command */
-	result = usb_control_msg(usb_dev_handle_list[portnum], 0x40,
-			COMM_CMD, 0x0053, 0x0000 | sendbyte, NULL, 0x0, TIMEOUT_VALUE);
+	result = libusb_control_transfer(usb_dev_handle_list[portnum],
+												0x40,
+												COMM_CMD,
+												0x0053,
+												0x0000 | sendbyte,
+												NULL,
+												0x0,
+												TIMEOUT_VALUE);
+			
 	//printf("result is %d\n", result);
 
-	/* repeat until the unit is not idle */
-	do {
-		/* get the status */
-		result = usb_bulk_read(usb_dev_handle_list[portnum], 0x81,
-				buffer, 0x20, TIMEOUT_VALUE);
-		//printf("result is %d\n", result);
-
-		//for (result = 0; result < 0x20; result++) {
-		//	printf("%02X: %02X\n", result, buffer[result]);
-		//}
-	} while (!(buffer[0x08] & 0x20) && !(result < 0));
-
+	// read device and get device status
+	getDeviceStatus(portnum);
 	/* get the data */
-	result = usb_bulk_read(usb_dev_handle_list[portnum], 0x83,
-			&retval, 0x1, 1000);
+	result = libusb_bulk_transfer(usb_dev_handle_list[portnum],
+											0x83,
+											&retval,
+											0x1,
+											&transferred,
+											1000);
 	if (result == -1) {
 		printf ("owTouchByte: clearing halt\n");
-		usb_clear_halt(usb_dev_handle_list[portnum], 0x83);
+		libusb_clear_halt(usb_dev_handle_list[portnum], 0x83);
 	}
 
 	/* return the data */
@@ -247,42 +316,25 @@ int owReadByte(int portnum)
 int owSpeed(int portnum, SMALLINT new_speed)
 {
 	int result; 
-	char buffer[0x20];
 
 	/* issue the command to enable speed changes */
-	result = usb_control_msg(usb_dev_handle_list[portnum], 0x40,
+	result = libusb_control_transfer(usb_dev_handle_list[portnum], 0x40,
 			MODE_CMD, MOD_SPEED_CHANGE_EN, 0x0001, NULL, 0x0, TIMEOUT_VALUE);
 	//printf("result is %d\n", result);
 
-	/* repeat until the unit is not idle */
-	do {
-		/* get the status */
-		result = usb_bulk_read(usb_dev_handle_list[portnum], 0x81,
-				buffer, 0x20, TIMEOUT_VALUE);
-		//printf("result is %d\n", result);
-
-		//for (result = 0; result < 0x20; result++) {
-		//	printf("%02X: %02X\n", result, buffer[result]);
-		//}
-	} while (!(buffer[0x08] & 0x20) && !(result < 0));
-
+	// read device and get device status
+	getDeviceStatus(portnum);
 	/* issue the command to change the speed */
-	result = usb_control_msg(usb_dev_handle_list[portnum], 0x40,
+	result = libusb_control_transfer(usb_dev_handle_list[portnum], 0x40,
 			MODE_CMD, MOD_1WIRE_SPEED, new_speed ? 0x0002 : 0x0000, NULL, 0x0, TIMEOUT_VALUE);
 	//printf("result is %d\n", result);
 
-	/* repeat until the unit is not idle */
-	do {
-		/* get the status */
-		result = usb_bulk_read(usb_dev_handle_list[portnum], 0x81,
-				buffer, 0x20, TIMEOUT_VALUE);
-		//printf("result is %d\n", result);
-
-		//for (result = 0; result < 0x20; result++) {
-		//	printf("%02X: %02X\n", result, buffer[result]);
-		//}
-	} while (!(buffer[0x08] & 0x20) && !(result < 0));
-
+	// read device and get device status
+	getDeviceStatus(portnum);
+	if(result != 0) {
+	   fprintf( stderr, "Error: owSpeed(). libusb_control_transfer returned %i\n", result);
+	}
+	
 	/* return the data */
 	return new_speed;
 }
@@ -303,8 +355,7 @@ int owSpeed(int portnum, SMALLINT new_speed)
 //
 int owLevel(int portnum, SMALLINT new_level)
 {
-	int result; 
-	char buffer[0x20];
+	int result;
 	unsigned int  pulse;
 	
 	switch( new_level )
@@ -327,22 +378,12 @@ int owLevel(int portnum, SMALLINT new_level)
 	}
 
 	/* issue the command to enable speed changes */
-	result = usb_control_msg(usb_dev_handle_list[portnum], 0x40,
+	result = libusb_control_transfer(usb_dev_handle_list[portnum], 0x40,
 			MODE_CMD, MOD_PULSE_EN, pulse, NULL, 0x0, TIMEOUT_VALUE);
 	//printf("result is %d\n", result);
 
-	/* repeat until the unit is not idle */
-	do {
-		/* get the status */
-		result = usb_bulk_read(usb_dev_handle_list[portnum], 0x81,
-				buffer, 0x20, TIMEOUT_VALUE);
-		//printf("result is %d\n", result);
-
-		//for (result = 0; result < 0x20; result++) {
-		//	printf("%02X: %02X\n", result, buffer[result]);
-		//}
-	} while (!(buffer[0x08] & 0x20) && !(result < 0));
-
+	// read device and get device status
+	getDeviceStatus(portnum);
 	/* return the data */
 	return (result < 0) ? result : new_level;
 }
