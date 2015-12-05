@@ -196,8 +196,8 @@ void usage()
   printf(BANNER_2);
   printf(BANNER_3, dtlib );		         /* Report Library version */
   printf("\nUsage: digitemp [-s -i -I -U -l -r -v -t -a -d -n -o -c]\n");
-  printf("                -i                            Initalize .digitemprc file\n");
-  printf("                -I                            Initalize .digitemprc file w/sorted serial #s\n");
+  printf("                -i                            Initialize .digitemprc file\n");
+  printf("                -I                            Initialize .digitemprc file w/sorted serial #s\n");
   printf("                -w                            Walk the full device tree\n");
   printf("                -s /dev/ttyS0                 Set serial port\n");
   printf("                -l /var/log/temperature       Send output to logfile\n");
@@ -218,7 +218,7 @@ void usage()
   printf("\nLogfile formats:  1 = One line per sensor, time, C, F (default)\n");
   printf("                  2 = One line per sample, elapsed time, temperature in C\n");
   printf("                  3 = Same as #2, except temperature is in F\n");
-  printf("        #2 and #3 have the data seperated by tabs, suitable for import\n");
+  printf("        #2 and #3 have the data separated by tabs, suitable for import\n");
   printf("        into a spreadsheet or other graphing software.\n");
   printf("\n        The format string uses strftime tokens plus 5 special ones for\n");
   printf("        digitemp - %%s for sensor #, %%C for centigrade, %%F for fahrenheit,\n");
@@ -2433,7 +2433,7 @@ int main( int argc, char *argv[] )
 
   if( argc <= 1 )
   {
-    fprintf(stderr,"Error! Not enough arguements.\n\n");
+    fprintf(stderr,"Error! Not enough arguments.\n\n");
     usage();
     return -1;
   }

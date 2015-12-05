@@ -19,7 +19,7 @@
    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
    ----------------------------------------------------------------------- */
 #define BANNER_1     "DigiTemp v3.6.0 Copyright 1996-2009 by Brian C. Lane\n"
-#define BANNER_2     "GNU Public License v2.0 - http://www.digitemp.com\n"
+#define BANNER_2     "GNU General Public License v2.0 - http://www.digitemp.com\n"
 #define BANNER_3     "Compiled for %s\n\n"
 
 #define OPT_INIT     0x0001
