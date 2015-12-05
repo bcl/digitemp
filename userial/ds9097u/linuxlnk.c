@@ -93,6 +93,7 @@
 #include <termios.h>
 #include <errno.h>
 #include <sys/time.h>
+#include <sys/file.h>
 
 #include "ds2480.h"
 #include "ownet.h"
@@ -104,7 +105,7 @@ void      CloseCOM(int);
 void      FlushCOM(int);
 int       ReadCOM(int, int, uchar*);
 void      BreakCOM(int);
-void      SetBaudCOM(int, int);
+void      SetBaudCOM(int, uchar);
 void      msDelay(int);
 long      msGettick(void);
 
@@ -138,6 +139,14 @@ SMALLINT OpenCOM(int portnum, char *port_zstr)
       OWERROR(OWERROR_GET_SYSTEM_RESOURCE_FAILED);
       return FALSE;  // changed (2.00), used to return fd;
    }
+
+   /* Lock the device */
+   if(flock(fd[portnum], LOCK_EX|LOCK_NB))
+     {
+        OWERROR(OWERROR_GET_SYSTEM_RESOURCE_FAILED);
+        return FALSE;
+     }
+
    rc = tcgetattr (fd[portnum], &t);
    if (rc < 0)
    {
@@ -322,7 +331,7 @@ void BreakCOM(int portnum)
 // PARMSET_57600    0x04
 // PARMSET_115200   0x06
 //
-void SetBaudCOM(int portnum, int new_baud)
+void SetBaudCOM(int portnum, uchar new_baud)
 {
    struct termios t;
    int rc;

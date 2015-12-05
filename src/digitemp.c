@@ -75,76 +75,10 @@
 #include <stdint.h>
 #include "ad26.h"
 
-// Include endian.h
-#if DARWIN
-#include <machine/endian.h>
-#endif
-#if FREEBSD
-#include <sys/endian.h>
-#endif
-#if !defined(DARWIN) && !defined(FREEBSD)
-#include <endian.h>
-#endif
-
-#ifdef LINUX
-#ifndef OWUSB
-#ifdef LOCKDEV
-#include <lockdev.h>
-#endif
-#endif
-#endif
-
 #include "digitemp.h"
 #include "device_name.h"
 #include "ownet.h"
 #include "owproto.h"
-
-
-/* Setup the correct getopt starting point */
-#ifdef LINUX
-#define GETOPTEOF -1
-#define OPTINDSTART 0
-#endif
-
-#ifdef CYGWIN
-#define GETOPTEOF -1
-#define OPTINDSTART 0
-#endif
-
-#ifdef AIX
-#define OPTINDSTART 0
-#define GETOPTEOF 255
-#endif
- 
-#ifdef SOLARIS
-#define GETOPTEOF EOF
-#define OPTINDSTART 1
-#endif
-
-#ifdef FREEBSD
-#define GETOPTEOF EOF
-#define OPTINDSTART 1
-#endif
-
-#ifdef OPENBSD
-#define GETOPTEOF EOF
-#define OPTINDSTART 1
-#endif
-
-#ifdef NETBSD
-#define GETOPTEOF EOF
-#define OPTINDSTART 1
-#endif
-
-#ifdef DARWIN
-#define GETOPTEOF EOF
-#define OPTINDSTART 1
-#endif
- 
-#ifdef OTHER
-#define GETOPTEOF EOF
-#define OPTINDSTART 1
-#endif 
 
 
 /* For tracking down strange errors */
@@ -152,10 +86,6 @@
 
 extern char 	*optarg;              
 extern int	optind, opterr, optopt;
-
-#if defined(FREEBSD) || defined(DARWIN)
-extern int optreset;
-#endif /* FREEBSD or DARWIN */
 
 extern const char dtlib[];			/* Library Used            */
  
@@ -196,8 +126,8 @@ void usage()
   printf(BANNER_2);
   printf(BANNER_3, dtlib );		         /* Report Library version */
   printf("\nUsage: digitemp [-s -i -I -U -l -r -v -t -a -d -n -o -c]\n");
-  printf("                -i                            Initalize .digitemprc file\n");
-  printf("                -I                            Initalize .digitemprc file w/sorted serial #s\n");
+  printf("                -i                            Initialize .digitemprc file\n");
+  printf("                -I                            Initialize .digitemprc file w/sorted serial #s\n");
   printf("                -w                            Walk the full device tree\n");
   printf("                -s /dev/ttyS0                 Set serial port\n");
   printf("                -l /var/log/temperature       Send output to logfile\n");
@@ -218,7 +148,7 @@ void usage()
   printf("\nLogfile formats:  1 = One line per sensor, time, C, F (default)\n");
   printf("                  2 = One line per sample, elapsed time, temperature in C\n");
   printf("                  3 = Same as #2, except temperature is in F\n");
-  printf("        #2 and #3 have the data seperated by tabs, suitable for import\n");
+  printf("        #2 and #3 have the data separated by tabs, suitable for import\n");
   printf("        into a spreadsheet or other graphing software.\n");
   printf("\n        The format string uses strftime tokens plus 5 special ones for\n");
   printf("        digitemp - %%s for sensor #, %%C for centigrade, %%F for fahrenheit,\n");
@@ -2433,7 +2363,7 @@ int main( int argc, char *argv[] )
 
   if( argc <= 1 )
   {
-    fprintf(stderr,"Error! Not enough arguements.\n\n");
+    fprintf(stderr,"Error! Not enough arguments.\n\n");
     usage();
     return -1;
   }
@@ -2470,10 +2400,9 @@ int main( int argc, char *argv[] )
   /* Unless the -i parameter is specified, then changes are saved to    */
   /* .digitemprc file                                                   */
 
-  optind = OPTINDSTART;
   opterr = 1;
 
-  while( (c = getopt(argc, argv, option_list)) != GETOPTEOF )
+  while( (c = getopt(argc, argv, option_list)) != -1 )
   {
     /* Process the command line arguments */
     switch( c )
@@ -2658,46 +2587,6 @@ int main( int argc, char *argv[] )
 
     exit(EXIT_NOPERM);
   }
-
-  /* Lock our use of the serial port, exit if it is in use */
-#ifdef LINUX
-#ifndef OWUSB
-#ifdef LOCKDEV
-  /* First turn serial_port into just the final device name */
-  if( !(p = strrchr( serial_port, '/' )) )
-  {
-    fprintf( stderr, "Error getting serial device from %s\n", serial_port );
-    
-    if( sensor_list.roms != NULL )
-      free( sensor_list.roms );
-
-    if( coupler_top != NULL )
-      free_coupler(1);
-
-    exit(EXIT_DEVERR);
-  }
-  strncpy( serial_dev, p+1, sizeof(serial_dev)-1 );
-
-  if( (pid = dev_lock( serial_dev )) != 0 )
-  {
-    if( pid == -1 )
-    {
-      fprintf( stderr, "Error locking %s. Do you have permission to write to /var/lock?\n", serial_dev );
-    } else {
-      fprintf( stderr, "Error, %s is locked by process %d\n", serial_dev, pid );
-    }
-      
-    if( sensor_list.roms != NULL )
-      free( sensor_list.roms );
-
-    if( coupler_top != NULL )
-      free_coupler(1);
-
-    exit(EXIT_LOCKED);
-  }
-#endif		/* LOCKDEV	*/
-#endif		/* OWUSB	*/
-#endif		/* LINUX 	*/
 #endif		/* !OWUSB 	*/
 
   /* Connect to the MLan network */
@@ -2719,13 +2608,6 @@ int main( int argc, char *argv[] )
     if( coupler_top != NULL )
       free_coupler(0);
 
-#ifdef LINUX
-#ifndef OWUSB
-#ifdef LOCKDEV
-    dev_unlock( serial_dev, 0 );
-#endif		/* LOCKDEV	*/
-#endif		/* OWUSB	*/
-#endif		/* LINUX	*/
     exit(EXIT_ERR);
   }
 
@@ -2746,14 +2628,6 @@ int main( int argc, char *argv[] )
 #else
       owRelease(0, temp );
 #endif /* OWUSB */
-
-#ifdef LINUX
-#ifndef OWUSB
-#ifdef LOCKDEV
-    dev_unlock( serial_dev, 0 );
-#endif		/* LOCKDEV	*/
-#endif		/* OWUSB	*/
-#endif		/* LINUX	*/
 
     exit(EXIT_OK);
   }
@@ -2779,14 +2653,6 @@ int main( int argc, char *argv[] )
       owRelease(0, temp );
       fprintf( stderr, "USB ERROR: %s\n", temp );
 #endif /* OWUSB */
-
-#ifdef LINUX
-#ifndef OWUSB
-#ifdef LOCKDEV
-      dev_unlock( serial_dev, 0 );
-#endif		/* LOCKDEV	*/
-#endif		/* OWUSB	*/
-#endif		/* LINUX	*/
 
       exit(EXIT_ERR);
     }
@@ -2871,14 +2737,6 @@ int main( int argc, char *argv[] )
 #else
   owRelease(0, temp );
 #endif /* OWUSB */
-
-#ifdef LINUX
-#ifndef OWUSB
-#ifdef LOCKDEV
-  dev_unlock( serial_dev, 0 );
-#endif		/* LOCKDEV	*/
-#endif		/* OWUSB	*/
-#endif		/* LINUX	*/
 
   exit(EXIT_OK);
 }
