@@ -52,10 +52,6 @@ DS2490OBJS	=	userial/ds2490/ownet.o userial/ds2490/owtran.o \
 # -----------------------------------------------------------------------
 SYSTYPE := $(shell uname -s)
 
-ifeq ($(SYSTYPE), Linux)
-  EXTRACFLAGS += -DLINUX
-endif
-
 ifneq (, $(findstring CYGWIN,$(SYSTYPE)))
   EXTRACFLAGS += -DCYGWIN
   LIBS   += -static -static-libgcc
@@ -68,15 +64,6 @@ endif
 
 ifeq ($(SYSTYPE), FreeBSD)
   EXTRACFLAGS += -DFREEBSD
-endif
-
-ifeq ($(SYSTYPE), OpenBSD)
-  EXTRACFLAGS += -DOPENBSD
-endif
-
-# Untested, but should work.
-ifeq ($(SYSTYPE), NetBSD)
-  EXTRACFLAGS += -DNETBSD
 endif
 
 ifeq ($(SYSTYPE), Darwin)

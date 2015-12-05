@@ -75,68 +75,10 @@
 #include <stdint.h>
 #include "ad26.h"
 
-// Include endian.h
-#if DARWIN
-#include <machine/endian.h>
-#endif
-#if FREEBSD
-#include <sys/endian.h>
-#endif
-#if !defined(DARWIN) && !defined(FREEBSD)
-#include <endian.h>
-#endif
-
 #include "digitemp.h"
 #include "device_name.h"
 #include "ownet.h"
 #include "owproto.h"
-
-
-/* Setup the correct getopt starting point */
-#ifdef LINUX
-#define GETOPTEOF -1
-#define OPTINDSTART 0
-#endif
-
-#ifdef CYGWIN
-#define GETOPTEOF -1
-#define OPTINDSTART 0
-#endif
-
-#ifdef AIX
-#define OPTINDSTART 0
-#define GETOPTEOF 255
-#endif
- 
-#ifdef SOLARIS
-#define GETOPTEOF EOF
-#define OPTINDSTART 1
-#endif
-
-#ifdef FREEBSD
-#define GETOPTEOF EOF
-#define OPTINDSTART 1
-#endif
-
-#ifdef OPENBSD
-#define GETOPTEOF EOF
-#define OPTINDSTART 1
-#endif
-
-#ifdef NETBSD
-#define GETOPTEOF EOF
-#define OPTINDSTART 1
-#endif
-
-#ifdef DARWIN
-#define GETOPTEOF EOF
-#define OPTINDSTART 1
-#endif
- 
-#ifdef OTHER
-#define GETOPTEOF EOF
-#define OPTINDSTART 1
-#endif 
 
 
 /* For tracking down strange errors */
@@ -144,10 +86,6 @@
 
 extern char 	*optarg;              
 extern int	optind, opterr, optopt;
-
-#if defined(FREEBSD) || defined(DARWIN)
-extern int optreset;
-#endif /* FREEBSD or DARWIN */
 
 extern const char dtlib[];			/* Library Used            */
  
@@ -2462,10 +2400,9 @@ int main( int argc, char *argv[] )
   /* Unless the -i parameter is specified, then changes are saved to    */
   /* .digitemprc file                                                   */
 
-  optind = OPTINDSTART;
   opterr = 1;
 
-  while( (c = getopt(argc, argv, option_list)) != GETOPTEOF )
+  while( (c = getopt(argc, argv, option_list)) != -1 )
   {
     /* Process the command line arguments */
     switch( c )
