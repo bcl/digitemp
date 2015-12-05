@@ -11,8 +11,15 @@
 
 VERSION = 3.6.0
 
-CC	= gcc
-CFLAGS	= -I./src -I./userial -O2 -Wall # -g
+SRCDIR	= $(CURDIR)
+VPATH	= $(SRCDIR)
+
+# May be overridden by the command line
+CFLAGS = -O2 -Wall # -g
+
+# Mandatory additions to CFLAGS
+EXTRACFLAGS	= -I$(SRCDIR)/src -I$(SRCDIR)/userial
+override CFLAGS	+= $(EXTRACFLAGS)
 
 OBJS		=	src/digitemp.o src/device_name.o src/ds2438.o
 HDRS		= 	src/digitemp.h src/device_name.h
@@ -48,7 +55,7 @@ DS2490OBJS	=	userial/ds2490/ownet.o userial/ds2490/owtran.o \
 SYSTYPE := $(shell uname -s)
 
 ifeq ($(SYSTYPE), Linux)
-  CFLAGS += -DLINUX
+  EXTRACFLAGS += -DLINUX
 
   # Set LOCK to yes for serial port locking support
   LOCK = no
@@ -56,44 +63,44 @@ ifeq ($(SYSTYPE), Linux)
 endif
 
 ifneq (, $(findstring CYGWIN,$(SYSTYPE)))
-  CFLAGS += -DCYGWIN
+  EXTRACFLAGS += -DCYGWIN
   LIBS   += -static -static-libgcc
 endif
 
 ifeq ($(SYSTYPE), SunOS)
-  CFLAGS += -DSOLARIS
+  EXTRACFLAGS += -DSOLARIS
   LIBS   += -lposix4
 endif
 
 ifeq ($(SYSTYPE), FreeBSD)
-  CFLAGS += -DFREEBSD
+  EXTRACFLAGS += -DFREEBSD
 endif
 
 ifeq ($(SYSTYPE), OpenBSD)
-  CFLAGS += -DOPENBSD
+  EXTRACFLAGS += -DOPENBSD
 endif
 
 # Untested, but should work.
 ifeq ($(SYSTYPE), NetBSD)
-  CFLAGS += -DNETBSD
+  EXTRACFLAGS += -DNETBSD
 endif
 
 ifeq ($(SYSTYPE), Darwin)
-  CFLAGS += -DDARWIN
+  EXTRACFLAGS += -DDARWIN
 endif
 
 ifeq ($(SYSTYPE), AIX)
-  CFLAGS += -DAIX
+  EXTRACFLAGS += -DAIX
 endif
 
 ifeq ($(LOCK), yes)
-  CFLAGS += -DLOCKDEV
+  EXTRACFLAGS += -DLOCKDEV
   LIBS   += -llockdev
 endif
 
 
 # USB specific flags
-ds2490:  CFLAGS += -DOWUSB
+ds2490:  EXTRACFLAGS += -DOWUSB
 ds2490:  LIBS   += -lusb
 
 
@@ -116,13 +123,13 @@ all:		help
 
 # Build the Linux executable
 ds9097:		$(OBJS) $(HDRS) $(ONEWIREOBJS) $(ONEWIREHDRS) $(DS9097OBJS)
-		$(CC) $(OBJS) $(ONEWIREOBJS) $(DS9097OBJS) -o digitemp_DS9097 $(LIBS)
+		$(CC) $(OBJS) $(ONEWIREOBJS) $(DS9097OBJS) -o digitemp_DS9097 $(LDFLAGS) $(LIBS)
 
 ds9097u:	$(OBJS) $(HDRS) $(ONEWIREOBJS) $(ONEWIREHDRS) $(DS9097UOBJS)
-		$(CC) $(OBJS) $(ONEWIREOBJS) $(DS9097UOBJS) -o digitemp_DS9097U $(LIBS)
+		$(CC) $(OBJS) $(ONEWIREOBJS) $(DS9097UOBJS) -o digitemp_DS9097U $(LDFLAGS) $(LIBS)
 
 ds2490:		$(OBJS) $(HDRS) $(ONEWIREOBJS) $(ONEWIREHDRS) $(DS2490OBJS)
-		$(CC) $(OBJS) $(ONEWIREOBJS) $(DS2490OBJS) -o digitemp_DS2490 $(LIBS)
+		$(CC) $(OBJS) $(ONEWIREOBJS) $(DS2490OBJS) -o digitemp_DS2490 $(LDFLAGS) $(LIBS)
 
 
 # Clean up the object files and the sub-directory for distributions
