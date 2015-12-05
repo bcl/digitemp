@@ -6,8 +6,6 @@
 #
 # Please note that this Makefile *needs* GNU make. BSD make won't do.
 #
-# To disable Lockfile support on Linux, chenage LOCK to no
-#
 
 VERSION = 3.6.0
 
@@ -56,10 +54,6 @@ SYSTYPE := $(shell uname -s)
 
 ifeq ($(SYSTYPE), Linux)
   EXTRACFLAGS += -DLINUX
-
-  # Set LOCK to yes for serial port locking support
-  LOCK = no
-
 endif
 
 ifneq (, $(findstring CYGWIN,$(SYSTYPE)))
@@ -91,11 +85,6 @@ endif
 
 ifeq ($(SYSTYPE), AIX)
   EXTRACFLAGS += -DAIX
-endif
-
-ifeq ($(LOCK), yes)
-  EXTRACFLAGS += -DLOCKDEV
-  LIBS   += -llockdev
 endif
 
 

@@ -39,6 +39,7 @@
 #include <termios.h>
 #include <fcntl.h>
 #include <ownet.h>
+#include <sys/file.h>
 
 /* local function prototypes */
 SMALLINT owAcquire(int,char *);
@@ -62,6 +63,14 @@ SMALLINT owAcquire(int portnum, char *port_zstr)
 	return FALSE;
      }
    
+   /* Lock the device */
+   if(flock(fd[portnum], LOCK_EX|LOCK_NB))
+     {
+	OWERROR(OWERROR_GET_SYSTEM_RESOURCE_FAILED);
+	perror("owAcquire: failed to open device");
+	return FALSE;
+     }
+
    /* Get device settings */
    if(tcgetattr(fd[portnum], &term[portnum] ) < 0 )
      {

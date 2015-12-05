@@ -86,14 +86,6 @@
 #include <endian.h>
 #endif
 
-#ifdef LINUX
-#ifndef OWUSB
-#ifdef LOCKDEV
-#include <lockdev.h>
-#endif
-#endif
-#endif
-
 #include "digitemp.h"
 #include "device_name.h"
 #include "ownet.h"
@@ -2658,46 +2650,6 @@ int main( int argc, char *argv[] )
 
     exit(EXIT_NOPERM);
   }
-
-  /* Lock our use of the serial port, exit if it is in use */
-#ifdef LINUX
-#ifndef OWUSB
-#ifdef LOCKDEV
-  /* First turn serial_port into just the final device name */
-  if( !(p = strrchr( serial_port, '/' )) )
-  {
-    fprintf( stderr, "Error getting serial device from %s\n", serial_port );
-    
-    if( sensor_list.roms != NULL )
-      free( sensor_list.roms );
-
-    if( coupler_top != NULL )
-      free_coupler(1);
-
-    exit(EXIT_DEVERR);
-  }
-  strncpy( serial_dev, p+1, sizeof(serial_dev)-1 );
-
-  if( (pid = dev_lock( serial_dev )) != 0 )
-  {
-    if( pid == -1 )
-    {
-      fprintf( stderr, "Error locking %s. Do you have permission to write to /var/lock?\n", serial_dev );
-    } else {
-      fprintf( stderr, "Error, %s is locked by process %d\n", serial_dev, pid );
-    }
-      
-    if( sensor_list.roms != NULL )
-      free( sensor_list.roms );
-
-    if( coupler_top != NULL )
-      free_coupler(1);
-
-    exit(EXIT_LOCKED);
-  }
-#endif		/* LOCKDEV	*/
-#endif		/* OWUSB	*/
-#endif		/* LINUX 	*/
 #endif		/* !OWUSB 	*/
 
   /* Connect to the MLan network */
@@ -2719,13 +2671,6 @@ int main( int argc, char *argv[] )
     if( coupler_top != NULL )
       free_coupler(0);
 
-#ifdef LINUX
-#ifndef OWUSB
-#ifdef LOCKDEV
-    dev_unlock( serial_dev, 0 );
-#endif		/* LOCKDEV	*/
-#endif		/* OWUSB	*/
-#endif		/* LINUX	*/
     exit(EXIT_ERR);
   }
 
@@ -2746,14 +2691,6 @@ int main( int argc, char *argv[] )
 #else
       owRelease(0, temp );
 #endif /* OWUSB */
-
-#ifdef LINUX
-#ifndef OWUSB
-#ifdef LOCKDEV
-    dev_unlock( serial_dev, 0 );
-#endif		/* LOCKDEV	*/
-#endif		/* OWUSB	*/
-#endif		/* LINUX	*/
 
     exit(EXIT_OK);
   }
@@ -2779,14 +2716,6 @@ int main( int argc, char *argv[] )
       owRelease(0, temp );
       fprintf( stderr, "USB ERROR: %s\n", temp );
 #endif /* OWUSB */
-
-#ifdef LINUX
-#ifndef OWUSB
-#ifdef LOCKDEV
-      dev_unlock( serial_dev, 0 );
-#endif		/* LOCKDEV	*/
-#endif		/* OWUSB	*/
-#endif		/* LINUX	*/
 
       exit(EXIT_ERR);
     }
@@ -2871,14 +2800,6 @@ int main( int argc, char *argv[] )
 #else
   owRelease(0, temp );
 #endif /* OWUSB */
-
-#ifdef LINUX
-#ifndef OWUSB
-#ifdef LOCKDEV
-  dev_unlock( serial_dev, 0 );
-#endif		/* LOCKDEV	*/
-#endif		/* OWUSB	*/
-#endif		/* LINUX	*/
 
   exit(EXIT_OK);
 }

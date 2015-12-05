@@ -93,6 +93,7 @@
 #include <termios.h>
 #include <errno.h>
 #include <sys/time.h>
+#include <sys/file.h>
 
 #include "ds2480.h"
 #include "ownet.h"
@@ -138,6 +139,14 @@ SMALLINT OpenCOM(int portnum, char *port_zstr)
       OWERROR(OWERROR_GET_SYSTEM_RESOURCE_FAILED);
       return FALSE;  // changed (2.00), used to return fd;
    }
+
+   /* Lock the device */
+   if(flock(fd[portnum], LOCK_EX|LOCK_NB))
+     {
+        OWERROR(OWERROR_GET_SYSTEM_RESOURCE_FAILED);
+        return FALSE;
+     }
+
    rc = tcgetattr (fd[portnum], &t);
    if (rc < 0)
    {
