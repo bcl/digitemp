@@ -105,7 +105,7 @@ void      CloseCOM(int);
 void      FlushCOM(int);
 int       ReadCOM(int, int, uchar*);
 void      BreakCOM(int);
-void      SetBaudCOM(int, int);
+void      SetBaudCOM(int, uchar);
 void      msDelay(int);
 long      msGettick(void);
 
@@ -331,7 +331,7 @@ void BreakCOM(int portnum)
 // PARMSET_57600    0x04
 // PARMSET_115200   0x06
 //
-void SetBaudCOM(int portnum, int new_baud)
+void SetBaudCOM(int portnum, uchar new_baud)
 {
    struct termios t;
    int rc;
