@@ -43,6 +43,7 @@
 /* wrap in Linux? */
 #include <sys/time.h>
 /* Wrap in Linux? */
+#include <string.h>
 
 #define TIMEOUT_VALUE	5000
 
@@ -95,6 +96,7 @@ int owTouchReset(int portnum)
 		- the unit is idle, and we've either got a result, or
 			waited long enough that none is likely to come */
 	do {
+		memset(buffer, 0x00, sizeof(buffer));
 		/* get the status */
 		result = usb_interrupt_read(usb_dev_handle_list[portnum], 0x81,
 				buffer, 0x20, TIMEOUT_VALUE);
@@ -166,6 +168,7 @@ int owTouchBit(int portnum, SMALLINT sendbit)
 
 	/* repeat until the unit is not idle */
 	do {
+		memset(buffer, 0x00, sizeof(buffer));
 		/* get the status */
 		result = usb_bulk_read(usb_dev_handle_list[portnum], 0x81,
 				buffer, 0x20, TIMEOUT_VALUE);
@@ -214,6 +217,7 @@ int owTouchByte(int portnum, SMALLINT sendbyte)
 
 	/* repeat until the unit is not idle */
 	do {
+		memset(buffer, 0x00, sizeof(buffer));
 		/* get the status */
 		result = usb_bulk_read(usb_dev_handle_list[portnum], 0x81,
 				buffer, 0x20, TIMEOUT_VALUE);
@@ -290,6 +294,7 @@ int owSpeed(int portnum, SMALLINT new_speed)
 
 	/* repeat until the unit is not idle */
 	do {
+		memset(buffer, 0x00, sizeof(buffer));
 		/* get the status */
 		result = usb_bulk_read(usb_dev_handle_list[portnum], 0x81,
 				buffer, 0x20, TIMEOUT_VALUE);
@@ -307,6 +312,7 @@ int owSpeed(int portnum, SMALLINT new_speed)
 
 	/* repeat until the unit is not idle */
 	do {
+		memset(buffer, 0x00, sizeof(buffer));
 		/* get the status */
 		result = usb_bulk_read(usb_dev_handle_list[portnum], 0x81,
 				buffer, 0x20, TIMEOUT_VALUE);
@@ -367,6 +373,7 @@ int owLevel(int portnum, SMALLINT new_level)
 
 	/* repeat until the unit is not idle */
 	do {
+		memset(buffer, 0x00, sizeof(buffer));
 		/* get the status */
 		result = usb_bulk_read(usb_dev_handle_list[portnum], 0x81,
 				buffer, 0x20, TIMEOUT_VALUE);
