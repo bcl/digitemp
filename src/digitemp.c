@@ -2557,7 +2557,7 @@ int main( int argc, char *argv[] )
   /* Check to see if the device file actually exists */
   if( !file_exists( serial_port ) )
   {
-    fprintf( stderr, "Error, serial port '%s' does not exists!\n", serial_port );
+    fprintf( stderr, "Error, serial port '%s' does not exist!\n", serial_port );
 
     if( sensor_list.roms != NULL )
       free( sensor_list.roms );
