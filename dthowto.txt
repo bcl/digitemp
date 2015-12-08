@@ -24,7 +24,7 @@ Note #74 for more information, or the sourcecode for DigiTemp.
   If you want a schematic diagram you need to look at page 20 of App.
   Note #74 from Dallas Semiconductor ( )
 
-  
+
   Parts List
   ----------
 
@@ -50,7 +50,7 @@ Note #74 for more information, or the sourcecode for DigiTemp.
   NOTE: I have not built a DB-9 version myself. Please let me know if you
         successfully build one or have problems with it.
 
-	On the DB-25 pins 1 and 7 must BOTH be connected together.
+        On the DB-25 pins 1 and 7 must BOTH be connected together.
 
 
   Step          Description
@@ -61,13 +61,13 @@ Note #74 for more information, or the sourcecode for DigiTemp.
    2.           Solder the 1.5k ohm resistor between RXD and TXD.
 
    3.           Solder one of the 1N5818 diodes between RXD and TXD with the
-		Cathode(the stripe) towards RXD.
+                Cathode(the stripe) towards RXD.
 
    4.           Solder the other 1N5818 diode between RXD and DTR with the
-		Cathode(the stripe) towsrds DTR.
+                Cathode(the stripe) towsrds DTR.
 
    5.           Solder the 1N5234 6.2v Zener between RXD and DTR with the
-		Cathode(the stripe) towards DTR.
+                Cathode(the stripe) towards DTR.
 
    6.           Solder RXD to one pin of the terminal block and paint it
                 black. This is the GND connection for the sensors.

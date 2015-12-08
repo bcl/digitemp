@@ -31,7 +31,7 @@ X 8. Loosen up checks for commands so -i -a will work!! -i should be allowed
 X 9. Create a lockfile for the serial port in use, and check the lock file
      before opening it.
 
- 10. Fix problems using the USB serial port. Not sure what's happening. It
+X10. Fix problems using the USB serial port. Not sure what's happening. It
      will sometimes work, most of the time fail. Extending VTIME didn't make
      any noticable difference.
 
@@ -60,9 +60,12 @@ X 9. Create a lockfile for the serial port in use, and check the lock file
      the loop on DS2480Detect it doesn't work consistently with the dongle.
 
      I need to add the delays back in, and see how they effect normal
-     operation. 
+     operation.
 
-
+     The problem, it appears, was the usb buffer wasn't being zered before
+     being used and an unknown number of bytes can be returned so it wasn't
+     actually checking a bit that was set by the data.
+     See commit 33422c748e28dc550e31eda63487135537838d00
 
 X11. Add counter and switch support.
      Counter support has been added. DS2406 counters.
