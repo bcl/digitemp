@@ -1548,6 +1548,7 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
         if( ( sensor_list->roms = malloc( sensors * 8 ) ) == NULL )
         {
           fprintf( stderr, "Error reserving memory for %d sensors\n", sensors );
+          fclose( fp );
           return -1;
         }
         sensor_list->max = sensors; 
