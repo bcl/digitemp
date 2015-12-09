@@ -16,13 +16,12 @@ https://lists.brianlane.com/mailman/listinfo/
   Quick Setup
   -----------
 
-  DigiTemp requires very little setup in order to work. Basically there are 4
+  DigiTemp requires very little setup in order to work. Basically there are 3
 requirements:
 
   1. Permission to access the serial port you will be using.
-  2. Permission to write to /var/lock if you are using Linux
-  3. A 1-wire serial port adapter
-  4. A 1-wire sensor connected to the adapter
+  2. A 1-wire serial port adapter
+  3. A 1-wire sensor connected to the adapter
 
   If you think you have all of these taken care of you can try the following to
 see if it 'Just Works':
@@ -89,7 +88,7 @@ see if it 'Just Works':
 
 	a. Permission problems. DigiTemp will complain if you don't have
 	   +rw permission on the serial port specified so this is a pretty
-	   easy one to catch. The same goes for permission on /var/lock/
+	   easy one to catch.
 
 	b. Wrong serial port. Make sure you know which port the adapter is
 	   plugged into. If you are using a DS2480 based adapter DigiTemp
@@ -163,18 +162,9 @@ arguments to the digitemp program.
 read all sensors, or read 1 sensor. This is after you have initialized the
 system with the -i command of course.
 
-  You need to make sure you have permission to access the serial port and
-under Linux the /var/lock directory. To allow access to the serial port, add
-the user that will be running DigiTemp to the uucp group (or whatever group
-owns the serial port device). To allow access to the lock directory add the
-same user to the lock group.
-
-  Alternatively you can set-group-id the binary to the lock group so that anyone
-running it will only need to be added to the serial port group, not the lock
-group.
-
-  chmod g+s digitemp
-  chown .lock digitemp
+  You need to make sure you have permission to access the serial port. To
+allow access to the serial port, add the user that will be running DigiTemp
+to the uucp group (or whatever group owns the serial port device).
 
 
 
