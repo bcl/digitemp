@@ -2,7 +2,7 @@
 
 Summary:           Dallas Semiconductor 1-wire device reading console application
 Name:              digitemp
-Version:           3.6.0
+Version:           3.7.0
 Release:           1%{?dist}
 License:           GPLv2+
 Group:             Applications/System
