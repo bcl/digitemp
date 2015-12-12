@@ -13,7 +13,7 @@ SRCDIR	= $(CURDIR)
 VPATH	= $(SRCDIR)
 
 # May be overridden by the command line
-CFLAGS = -O2 -Wall # -g
+CFLAGS ?= -O2 -Wall # -g
 
 # Mandatory additions to CFLAGS
 EXTRACFLAGS	= -I$(SRCDIR)/src -I$(SRCDIR)/userial
