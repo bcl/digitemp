@@ -117,10 +117,14 @@ clean:
 		rm -rf digitemp-$(VERSION)
 
 # Sign the binaries using gpg (www.gnupg.org)
-# My key is available from www.brianlane.com
+# My key is available from the keyservers or
+# https://www.brianlane.com/0xD29845A70F5017DE.txt
 sign:
 		gpg -ba digitemp_DS*
 		echo
+
+tag:
+		git tag -s -u 0x3085CEE24BECD24B -m "Tag as v$(VERSION)" v$(VERSION)
 
 # Install digitemp into /usr/local/bin
 install:	digitemp
@@ -128,7 +132,9 @@ install:	digitemp
 
 # Build the archive of everything
 archive:	clean
-		cd .. && tar --exclude *.o --exclude .svn -cvzf digitemp-$(VERSION).tar.gz digitemp-$(VERSION)/* 
+		git archive --format=tar --prefix=digitemp-$(VERSION)/ v$(VERSION) > v$(VERSION).tar
+		gzip -9 v$(VERSION).tar
+		@echo "The archive is in v$(VERSION).tar.gz"
 
 # Build the source distribution
 source:		archive
