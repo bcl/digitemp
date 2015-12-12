@@ -7,7 +7,7 @@
 # Please note that this Makefile *needs* GNU make. BSD make won't do.
 #
 
-VERSION = 3.7.0
+VERSION = 3.7.1
 
 SRCDIR	= $(CURDIR)
 VPATH	= $(SRCDIR)

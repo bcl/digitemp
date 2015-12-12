@@ -2,7 +2,7 @@
 
 Summary:           Dallas Semiconductor 1-wire device reading console application
 Name:              digitemp
-Version:           3.7.0
+Version:           3.7.1
 Release:           1%{?dist}
 License:           GPLv2+
 Group:             Applications/System
@@ -59,6 +59,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/%{name}.*
 
 %changelog
+* Sat Dec 12 2015 Brian C. Lane <bcl@redhat.com> 3.7.1-1
+- Update version to 3.7.1
+- Fix version in digitemp.h
+
 * Sat Dec 12 2015 Brian C. Lane <bcl@redhat.com> 3.7.0-1
 - Updating to v3.7.0
 - New upstream location at GitHub
