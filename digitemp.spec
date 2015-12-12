@@ -1,4 +1,4 @@
-%define with_libusb 1
+%global with_libusb 1
 
 Summary:           Dallas Semiconductor 1-wire device reading console application
 Name:              digitemp
@@ -7,10 +7,7 @@ Release:           1%{?dist}
 License:           GPLv2+
 Group:             Applications/System
 URL:               http://www.digitemp.com/
-Source0:           http://www.digitemp.com/software/linux/%{name}-%{version}.tar.gz
-Source1:           dthowto.txt
-Source2:           DS9097_Schematic.gif
-Patch0:            digitemp-cflags.patch
+Source0:           https://github.com/bcl/%{name}/archive/v%{version}.tar.gz
 %if %{with_libusb}
 BuildRequires:     libusb-devel
 %endif
@@ -27,13 +24,14 @@ MicroLAN Coupler (used in 1-wire hubs) and the AAG TAI-8540 humidity sensor.
 
 %prep
 %setup -q
-%patch0 -p1 -b .cflags
-cp -f %{SOURCE1} %{SOURCE2} .
 
 %build
+CFLAGS="$RPM_OPT_FLAGS -fPIE -DPIC"; export CFLAGS
 make ds9097 %{?_smp_mflags}
+make clean
 make ds9097u %{?_smp_mflags}
 %if %{with_libusb}
+make clean
 make ds2490 %{?_smp_mflags}
 %endif
 
@@ -44,9 +42,11 @@ install -m 755 digitemp_DS9097 digitemp_DS9097U $RPM_BUILD_ROOT%{_bindir}
 %if %{with_libusb}
 install -m 755 digitemp_DS2490 $RPM_BUILD_ROOT%{_bindir}
 %endif
+install -p -m 644 %{name}.1 $RPM_BUILD_ROOT%{_mandir}/man1/%{name}.1
 
-iconv -f iso-8859-1 -t utf-8 -o digitemp.1.utf8 digitemp.1
-install -m 644 digitemp.1.utf8 $RPM_BUILD_ROOT%{_mandir}/man1/%{name}.1
+# Convert everything to UTF-8
+iconv -f iso-8859-1 -t utf-8 -o ChangeLog.utf8 ChangeLog
+touch -c -r ChangeLog ChangeLog.utf8; mv -f ChangeLog.utf8 ChangeLog
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -59,6 +59,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/%{name}.*
 
 %changelog
+* Sat Dec 12 2015 Brian C. Lane <bcl@redhat.com> 3.7.0-1
+- Updating to v3.7.0
+- New upstream location at GitHub
+
 * Thu Aug 28 2008 Brian C. Lane <bcl@brianlane.com> 3.6.0-1
 - Releasing new version with these changes:
 - Updated to the .spec file from Fedora9
