@@ -93,8 +93,8 @@ SMALLINT owAcquire(int portnum, char *port_zstr)
    term[portnum].c_cc[VMIN] = 1;  
    term[portnum].c_cc[VTIME] = 0;
       
-   /* 6 data bits, Receiver enabled, Hangup, Dont change "owner" */
-   term[portnum].c_cflag |= CS6 | CREAD | HUPCL | CLOCAL;
+   /* 8 data bits, Receiver enabled, Hangup, Dont change "owner" */
+   term[portnum].c_cflag |= CS8 | CREAD | HUPCL | CLOCAL;
    
    /* Set input and output speed to 115.2k */
    cfsetispeed(&term[portnum], B115200);

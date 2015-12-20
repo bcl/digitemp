@@ -185,8 +185,8 @@ SMALLINT owTouchReset(int portnum)
    cfsetispeed(&term[portnum], B115200);
    cfsetospeed(&term[portnum], B115200);
    
-   /* set to 6 data bits */
-   term[portnum].c_cflag |= CS6; 
+   /* set to 8 data bits */
+   term[portnum].c_cflag |= CS8;
 
    if (tcsetattr(fd[portnum], TCSANOW, &term[portnum] ) < 0 )
      {
