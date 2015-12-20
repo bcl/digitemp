@@ -77,6 +77,7 @@ SMALLINT owAcquire(int portnum, char *port_zstr)
 	OWERROR(OWERROR_SYSTEM_RESOURCE_INIT_FAILED);
 	perror("owAcquire: failed to set attributes");
 	close(fd[portnum]);
+	fd[portnum] = -1;
 	return FALSE;
      }
    
@@ -106,6 +107,7 @@ SMALLINT owAcquire(int portnum, char *port_zstr)
 	OWERROR(OWERROR_SYSTEM_RESOURCE_INIT_FAILED);
 	perror("owAcquire: failed to set attributes");	
 	close(fd[portnum]);
+	fd[portnum] = -1;
 	return FALSE;
      }
       
@@ -124,7 +126,6 @@ void owRelease(int portnum)
 	/* We failed doing that */
 	OWERROR(OWERROR_SYSTEM_RESOURCE_INIT_FAILED);
 	perror("owAcquire: failed to set attributes");
-	close(fd[portnum]);
      }
    
    /* Close the port */
@@ -134,6 +135,7 @@ void owRelease(int portnum)
 	OWERROR(OWERROR_SYSTEM_RESOURCE_INIT_FAILED);
 	perror("owAcquire: failed to close port");
      }
+   fd[portnum] = -1;
 
    /* we should return an error condition here but MAXIMS API is 
     * badly designed */

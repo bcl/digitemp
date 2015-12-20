@@ -135,6 +135,7 @@ SMALLINT owTouchReset(int portnum)
 	OWERROR(OWERROR_SYSTEM_RESOURCE_INIT_FAILED);
 	perror("owTouchReset: Error with tcsetattr 1");
 	close(fd[portnum]);
+	fd[portnum] = -1;
 	return FALSE;
      }
    
@@ -193,6 +194,7 @@ SMALLINT owTouchReset(int portnum)
 	OWERROR(OWERROR_SYSTEM_RESOURCE_INIT_FAILED);
 	perror("Reset: Error with tcsetattr 2");
 	close(fd[portnum]);
+	fd[portnum] = -1;
 	return FALSE;
      }
 
