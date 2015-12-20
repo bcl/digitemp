@@ -41,6 +41,8 @@
 #include <ownet.h>
 #include <sys/file.h>
 
+#include <assert.h>
+
 /* local function prototypes */
 SMALLINT owAcquire(int,char *);
 void     owRelease(int);
@@ -120,6 +122,7 @@ SMALLINT owAcquire(int portnum, char *port_zstr)
 /* Release port 'portnum' */
 void owRelease(int portnum)
 {
+   assert(fd[portnum] != -1);
    /* Restore original settings */
    if(tcsetattr(fd[portnum], TCSANOW, &term_orig[portnum]) < 0 )
      {
