@@ -23,7 +23,7 @@
 # your root directory or specify the configuration file using -c filename
 # on the digitemp command line in the reading variable below.
 
-# Get the current temperatures, digitemp has been previously initalized with
+# Get the current temperatures, digitemp has been previously initialized with
 # digitemp -i -s /dev/ttyS0 -o2 -a
 
 # Run it in quiet mode, output is 0\tsensor#1\tsensor#2\tsensor#3

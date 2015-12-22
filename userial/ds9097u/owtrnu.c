@@ -86,7 +86,7 @@ static SMALLINT Copy_Scratchpad(int,int,SMALLINT);
 //
 // 'portnum'  - number 0 to MAX_PORTNUM-1.  This number is provided to
 //              indicate the symbolic port number.
-// 'do_reset' - cause a owTouchReset to occure at the begining of
+// 'do_reset' - cause a owTouchReset to occur at the begining of
 //              communication TRUE(1) or not FALSE(0)
 // 'tran_buf' - pointer to a block of unsigned
 //              chars of length 'tran_len' that will be sent
@@ -159,7 +159,7 @@ SMALLINT owBlock(int portnum, SMALLINT do_reset, uchar *tran_buf, SMALLINT tran_
    else
       OWERROR(OWERROR_WRITECOM_FAILED);
 
-   // an error occured so re-sync with DS2480
+   // an error occurred so re-sync with DS2480
    DS2480Detect(portnum);
 
    return FALSE;

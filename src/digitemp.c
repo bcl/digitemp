@@ -19,7 +19,7 @@
    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
    
      digitemp -w                        Walk the LAN & show all
-     digitemp -i			Initalize .digitemprc file
+     digitemp -i			Initialize .digitemprc file
      digitemp -I                        Initialize .digitemprc w/sorted serial #s
      digitemp -s/dev/ttyS0		Set serial port (required)
      digitemp -cdigitemp.conf		Configuration File
@@ -40,7 +40,7 @@
 
      Logfile formats:
      1 = (default) - 1 line per sensor, time, C, F
-         1 line for each sample, elapsed time, sensor #1, #2, ... tab seperated
+         1 line for each sample, elapsed time, sensor #1, #2, ... tab separated
      2 = Reading in C
      3 = Reading in F
 
@@ -2038,7 +2038,7 @@ int Init1WireLan( struct _roms *sensor_list )
   /* Free up the coupler list */
   free_coupler(0);
 
-  /* Initalize the coupler pointer */
+  /* Initialize the coupler pointer */
   coupler_end = coupler_top;
 
   if( !(opts & OPT_QUIET) )
@@ -2402,7 +2402,7 @@ int main( int argc, char *argv[] )
       case 'w': opts |= OPT_WALK;               /* Walk the LAN         */
                 break;
     
-      case 'i':	opts |= OPT_INIT;		/* Initalize the s#'s	*/
+      case 'i':	opts |= OPT_INIT;		/* Initialize the s#'s	*/
       		break;
       		
       case 'r':	tmp_read_time = atoi(optarg);	/* Read delay in mS	*/
@@ -2617,7 +2617,7 @@ int main( int argc, char *argv[] )
 
 
   /* ------------------------------------------------------------------*/
-  /* Should we initalize the sensors?                                  */
+  /* Should we initialize the sensors?                                  */
   /* This should store the serial numbers to the .digitemprc file      */
   if( opts & OPT_INIT )
   {

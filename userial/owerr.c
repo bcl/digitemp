@@ -136,7 +136,7 @@ int owHasErrors(void)
    //
    // Arguments:  int err - the error code you wish to raise.
    //             int lineno - DEBUG only - the line number where it was raised
-   //             char* filename - DEBUG only - the file name where it occured.
+   //             char* filename - DEBUG only - the file name where it occurred.
    //
    void owRaiseError(int err, int lineno, char* filename)
    {
@@ -267,7 +267,7 @@ int owHasErrors(void)
    /*097*/ "Failed to create a challenge on the coprocessor.",
    /*098*/ "Transaction Incomplete: service data was not valid.",
    /*099*/ "Transaction Incomplete: service data was not updated.",
-   /*100*/ "Unrecoverable, catastrophic service failure occured.",
+   /*100*/ "Unrecoverable, catastrophic service failure occurred.",
    /*101*/ "Load First Secret from scratchpad data failed.",
    /*102*/ "Failed to match signature of user's service data."
    };

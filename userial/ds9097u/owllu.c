@@ -139,7 +139,7 @@ SMALLINT owTouchReset(int portnum)
    else
       OWERROR(OWERROR_WRITECOM_FAILED);
 
-   // an error occured so re-sync with DS2480
+   // an error occurred so re-sync with DS2480
    DS2480Detect(portnum);
 
    return FALSE;
@@ -199,7 +199,7 @@ SMALLINT owTouchBit(int portnum, SMALLINT sendbit)
    else
       OWERROR(OWERROR_WRITECOM_FAILED);
 
-   // an error occured so re-sync with DS2480
+   // an error occurred so re-sync with DS2480
    DS2480Detect(portnum);
 
    return 0;
@@ -289,7 +289,7 @@ SMALLINT owTouchByte(int portnum, SMALLINT sendbyte)
    else
       OWERROR(OWERROR_WRITECOM_FAILED);
 
-   // an error occured so re-sync with DS2480
+   // an error occurred so re-sync with DS2480
    DS2480Detect(portnum);
 
    return 0;
@@ -547,7 +547,7 @@ SMALLINT owProgramPulse(int portnum)
    else
       OWERROR(OWERROR_WRITECOM_FAILED);
 
-   // an error occured so re-sync with DS2480
+   // an error occurred so re-sync with DS2480
    DS2480Detect(portnum);
 
    return FALSE;

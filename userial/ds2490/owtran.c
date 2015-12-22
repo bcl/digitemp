@@ -42,7 +42,7 @@
 // 1-Wire Net with an optional reset at the begining of communication.
 // The result is returned in the same buffer.
 //
-// 'do_reset' - cause a owTouchReset to occure at the begining of
+// 'do_reset' - cause a owTouchReset to occur at the begining of
 //              communication TRUE(1) or not FALSE(0)
 // 'tran_buf' - pointer to a block of unsigned
 //              chars of length 'TranferLength' that will be sent

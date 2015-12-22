@@ -157,7 +157,7 @@
 		Changed version # to v3.0.0
 
 08/21/2002      Small bug with -i crept in, it wants another command to be
-                present, it won't just initalize.
+                present, it won't just initialize.
 
 08/18/2002	Added %N token to allow the time in seconds since Epoch to
 		be selected in the output.
@@ -182,7 +182,7 @@
 		exit if the user doesn't have access to the serial device.
 
 06/23/2002      Releasing new version today. Really! Making -q turn off 
-                the extra output I added for initalizing the 1-wire lan.
+                the extra output I added for initializing the 1-wire lan.
 
 06/08/2002      Adding patches from John. exit() codes are now #defines
                 and .digitemprc now outputs the serial numbers as hex
@@ -339,7 +339,7 @@
                 Adding support for the DS9097-U adapter for the Linux
                 version. The Solaris version will need changes to be able
                 to support the DS9097-U.
-                Changed license to GNU Public License v2.0
+                Changed license to GNU General Public License v2.0
                 Added the -q option to make the banner disappear.
 
 01/01/2000      Well, no release last year. Adding -q to make the banner
@@ -402,7 +402,7 @@
 08/31/1998      Adding a check for family 0x10 so that we can read DS1820s
                 while they are on a network that includes other 1-wire
                 devices.
-                Fixed a problem with freeing uninitalized rom_list when
+                Fixed a problem with freeing uninitialized rom_list when
                 starting a SearchROM. Not sure why this never appeared
                 before.
 

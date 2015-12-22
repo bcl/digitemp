@@ -33,7 +33,7 @@ see if it 'Just Works':
     If you had my 1-wire setup (hub and sensors) you would see this:
 
 	DigiTemp v3.3.0 Copyright 1996-2004 by Brian C. Lane
-	GNU Public License v2.0 - http://www.brianlane.com
+	GNU General Public License v2.0 - http://www.brianlane.com
 	Turning off all DS2409 Couplers
 	...
 	Searching the 1-Wire LAN
@@ -66,7 +66,7 @@ see if it 'Just Works':
     Again, if you were using the same 1-wire lan as I am you would see:
 
 	DigiTemp v3.3.0 Copyright 1996-2004 by Brian C. Lane
-	GNU Public License v2.0 - http://www.brianlane.com
+	GNU General Public License v2.0 - http://www.brianlane.com
 	Jan 11 08:33:41 Sensor 0 C: 22.50 F: 72.50
 	Jan 11 08:33:42 Sensor 1 C: 31.44 F: 88.59
 	Jan 11 08:33:43 Sensor 2 C: 21.56 F: 70.81
@@ -178,7 +178,7 @@ connected to the branch of another coupler). The output will identify each
 device connected, even if it isn't a sensor that DigiTemp supports.
 
 	DigiTemp v3.3.0 Copyright 1996-2003 by Brian C. Lane
-	GNU Public License v2.0 - http://www.brianlane.com
+	GNU General Public License v2.0 - http://www.brianlane.com
 	Turning off all DS2409 Couplers
 
 	Devices on the Main LAN
@@ -260,7 +260,7 @@ raw voltages from the DS2438. The format string for this is hard-coded and
 the output looks like this:
 
 	DigiTemp v3.3.0 Copyright 1996-2003 by Brian C. Lane
-	GNU Public License v2.0 - http://www.brianlane.com
+	GNU General Public License v2.0 - http://www.brianlane.com
 	Jan 11 16:56:00 Sensor 6 VDD: 4.70 AD: 1.46 C: 27.94
 
 
@@ -444,7 +444,7 @@ when repeatedly reading multiple sensors.
 
   Version 2.5 adds compilation under Solaris. A new log option of %R has
 been added to output the serial number in hex in the logging output string.
-The quiet -q option now quiets down the 1-Wire walk and initalize routine so
+The quiet -q option now quiets down the 1-Wire walk and initialize routine so
 that only the important information is output.
 
   Version 2.4 fixes the problems (finally!) with the DS18B20 and DS1822
@@ -456,9 +456,9 @@ be found at www.simat.enta.net
 
   Version 2.x.x removes support for the old adapter (based on the one
 described in App. Note 74 from Dallas Semiconductor. Version 1.3 still
-supports the older adapters and is now also released under the GNU public
-license). This new version uses the DS9097-U adapter available from Dallas
-Semiconductor. You can order them from their iButton webpage at
+supports the older adapters and is now also released under the GNU General
+Public License). This new version uses the DS9097-U adapter available from
+Dallas Semiconductor. You can order them from their iButton webpage at
 www.ibutton.com
 
   This adapter is more expensive but is easier to program and support higher

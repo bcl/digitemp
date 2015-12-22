@@ -24,6 +24,6 @@
 
   The suggested initialization sets up digitemp to output the temperature in
   Centigrade and the conversion to Fahrenheit. The -o option passed to
-  digitemp when it is initalized controls how the temperature is output.
+  digitemp when it is initialized controls how the temperature is output.
 
 

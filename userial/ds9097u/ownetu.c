@@ -300,7 +300,7 @@ SMALLINT owNext(int portnum, SMALLINT do_reset, SMALLINT alarm_only)
    else
       OWERROR(OWERROR_WRITECOM_FAILED);
    
-   // an error occured so re-sync with DS2480
+   // an error occurred so re-sync with DS2480
    DS2480Detect(portnum);
 
    // reset the search

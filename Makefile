@@ -2,7 +2,7 @@
 # Makefile for DigiTemp
 #
 # Copyright 1996-2015 by Brian C. Lane <bcl@brianlane.com>
-# See COPYING for GNU Public License
+# See COPYING for GNU General Public License
 #
 # Please note that this Makefile *needs* GNU make. BSD make won't do.
 #

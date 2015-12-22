@@ -168,7 +168,7 @@ close(DOTTEMP);
 # Now all the temps are in dottemp -- it might be better to read it line
 # by line for bigger files?
 
-# Initalize the initial variables - I should use a list for this
+# Initialize the initial variables - I should use a list for this
 $x = $hmargin;
 $_= $dottemp[0];
 @_ = split( " ", $_ );
