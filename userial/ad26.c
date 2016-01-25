@@ -30,6 +30,7 @@
 
 // Include Files
 #include <stdio.h>
+#include <sys/types.h>
 #include "ownet.h"
 #include "ad26.h"
 #include "owproto.h"

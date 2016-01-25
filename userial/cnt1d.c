@@ -29,6 +29,7 @@
 //  Version: 2.00
 //
 //
+#include <sys/types.h>
 #include "ownet.h"
 
 // external One Wire functions from nework layer

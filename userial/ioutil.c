@@ -35,6 +35,7 @@
 #include <signal.h>
 #include <string.h>
 #include <ctype.h>
+#include <sys/types.h>
 #include "ownet.h"
 
 #ifdef __MC68K__

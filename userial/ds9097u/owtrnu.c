@@ -39,6 +39,7 @@
 //                        Added file I/O operations
 //
 
+#include <sys/types.h>
 #include "ownet.h"
 #include "ds2480.h"
 
