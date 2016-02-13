@@ -87,17 +87,13 @@
    #define SMALLINT uchar
 #endif
 
-#ifdef SOLARIS
-#include <sys/types.h>
-#include <time.h>
-#endif
-
-
 
 //--------------------------------------------------------------//
 // Common Includes to ownet applications
 //--------------------------------------------------------------//
 #include <stdlib.h>
+#include <sys/types.h>
+#include <time.h>
 
 
 //--------------------------------------------------------------//
