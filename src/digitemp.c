@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
    DigiTemp
       
-   Copyright 1996-2015 by Brian C. Lane <bcl@brianlane.com>
+   Copyright 1996-2016 by Brian C. Lane <bcl@brianlane.com>
    All Rights Reserved
 
    This program is free software; you can redistribute it and/or modify it
