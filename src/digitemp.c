@@ -65,10 +65,8 @@
 #if !defined(AIX) && !defined(SOLARIS) && !defined(FREEBSD) && !defined(DARWIN)
 #include <getopt.h>
 #endif /* !AIX and !SOLARIS and !FREEBSD and !DARWIN */
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <time.h>
 #include <string.h>
 #include <fcntl.h>
 #include <strings.h>
