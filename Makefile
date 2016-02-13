@@ -1,13 +1,13 @@
 #
 # Makefile for DigiTemp
 #
-# Copyright 1996-2015 by Brian C. Lane <bcl@brianlane.com>
+# Copyright 1996-2016 by Brian C. Lane <bcl@brianlane.com>
 # See COPYING for GNU General Public License
 #
 # Please note that this Makefile *needs* GNU make. BSD make won't do.
 #
 
-VERSION = 3.7.1
+VERSION=$(shell awk '/Version:/ { print $$2 }' digitemp.spec)
 
 SRCDIR	= $(CURDIR)
 VPATH	= $(SRCDIR)
@@ -135,6 +135,22 @@ archive:	clean
 		git archive --format=tar --prefix=digitemp-$(VERSION)/ v$(VERSION) > v$(VERSION).tar
 		gzip -9 v$(VERSION).tar
 		@echo "The archive is in v$(VERSION).tar.gz"
+
+rpmlog:
+		@git log --pretty="format:- %s (%ae)" v$(VERSION).. |sed -e 's/@.*)/)/' | grep -v "Merge pull request"
+
+bumpver:
+		@NEWSUBVER=$$((`echo $(VERSION) |cut -d . -f 3` + 1)) ; \
+		NEWVERSION=`echo $(VERSION).$$NEWSUBVER |cut -d . -f 1,2,4` ; \
+		DATELINE="* `date "+%a %b %d %Y"` `git config user.name` <`git config user.email`>  - $$NEWVERSION-1"  ; \
+		cl=`grep -n %changelog digitemp.spec |cut -d : -f 1` ; \
+		tail --lines=+$$(($$cl + 1)) digitemp.spec > speclog ; \
+		(head -n $$cl digitemp.spec ; echo "$$DATELINE" ; make --quiet rpmlog 2>/dev/null ; echo ""; cat speclog) > digitemp.spec.new ; \
+		mv digitemp.spec.new digitemp.spec ; rm -f speclog ; \
+		sed -i "s/Version:\s+$(VERSION)/Version:   $$NEWVERSION/" digitemp.spec ; \
+		sed -i "s/$(VERSION)/$$NEWVERSION/" README ; \
+		sed -i "s/$(VERSION)/$$NEWVERSION/" COPYRIGHT ; \
+		sed -i "s/$(VERSION)/$$NEWVERSION/" ./src/digitemp.h
 
 # Build the source distribution
 source:		archive
