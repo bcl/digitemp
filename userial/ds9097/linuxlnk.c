@@ -73,6 +73,8 @@
 
 #include <ownet.h>
 
+#include <assert.h>
+
 /* The UART_FIFO_SIZE defines the amount of bytes that are written before
  * reading the reply. Any positive value should work and 16 is probably low
  * enough to avoid losing bytes in even most extreme situations on all modern
@@ -111,6 +113,7 @@ extern int fd[MAX_PORTNUM];
  * the reset has failed and it returns FALSE. */
 SMALLINT owTouchReset(int portnum)
 {
+   assert(fd[portnum] != -1);
    fd_set readset;
    struct timeval timeout_tv;
    
@@ -135,6 +138,7 @@ SMALLINT owTouchReset(int portnum)
 	OWERROR(OWERROR_SYSTEM_RESOURCE_INIT_FAILED);
 	perror("owTouchReset: Error with tcsetattr 1");
 	close(fd[portnum]);
+	fd[portnum] = -1;
 	return FALSE;
      }
    
@@ -185,14 +189,15 @@ SMALLINT owTouchReset(int portnum)
    cfsetispeed(&term[portnum], B115200);
    cfsetospeed(&term[portnum], B115200);
    
-   /* set to 6 data bits */
-   term[portnum].c_cflag |= CS6; 
+   /* set to 8 data bits */
+   term[portnum].c_cflag |= CS8;
 
    if (tcsetattr(fd[portnum], TCSANOW, &term[portnum] ) < 0 )
      {
 	OWERROR(OWERROR_SYSTEM_RESOURCE_INIT_FAILED);
 	perror("Reset: Error with tcsetattr 2");
 	close(fd[portnum]);
+	fd[portnum] = -1;
 	return FALSE;
      }
 
@@ -204,6 +209,7 @@ SMALLINT owTouchReset(int portnum)
 
 void owTouchBlock( int portnum, int timeout, int nbits, uchar *transfer_buf)
 {
+   assert(fd[portnum] != -1);
    fd_set readset;
    char *buf;
    struct timeval timeout_tv;
@@ -323,6 +329,7 @@ int owTouchBits( int portnum, int timeout, int nbits, SMALLINT outch  )
 //
 SMALLINT owTouchBit(int portnum, SMALLINT sbit)
 {
+   assert(fd[portnum] != -1);
    //unsigned char c = 0;
   unsigned char sendbit;
    unsigned char inbit = 0;

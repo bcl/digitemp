@@ -41,6 +41,8 @@
 #include <ownet.h>
 #include <sys/file.h>
 
+#include <assert.h>
+
 /* local function prototypes */
 SMALLINT owAcquire(int,char *);
 void     owRelease(int);
@@ -77,6 +79,7 @@ SMALLINT owAcquire(int portnum, char *port_zstr)
 	OWERROR(OWERROR_SYSTEM_RESOURCE_INIT_FAILED);
 	perror("owAcquire: failed to set attributes");
 	close(fd[portnum]);
+	fd[portnum] = -1;
 	return FALSE;
      }
    
@@ -93,8 +96,8 @@ SMALLINT owAcquire(int portnum, char *port_zstr)
    term[portnum].c_cc[VMIN] = 1;  
    term[portnum].c_cc[VTIME] = 0;
       
-   /* 6 data bits, Receiver enabled, Hangup, Dont change "owner" */
-   term[portnum].c_cflag |= CS6 | CREAD | HUPCL | CLOCAL;
+   /* 8 data bits, Receiver enabled, Hangup, Dont change "owner" */
+   term[portnum].c_cflag |= CS8 | CREAD | HUPCL | CLOCAL;
    
    /* Set input and output speed to 115.2k */
    cfsetispeed(&term[portnum], B115200);
@@ -106,6 +109,7 @@ SMALLINT owAcquire(int portnum, char *port_zstr)
 	OWERROR(OWERROR_SYSTEM_RESOURCE_INIT_FAILED);
 	perror("owAcquire: failed to set attributes");	
 	close(fd[portnum]);
+	fd[portnum] = -1;
 	return FALSE;
      }
       
@@ -118,13 +122,13 @@ SMALLINT owAcquire(int portnum, char *port_zstr)
 /* Release port 'portnum' */
 void owRelease(int portnum)
 {
+   assert(fd[portnum] != -1);
    /* Restore original settings */
    if(tcsetattr(fd[portnum], TCSANOW, &term_orig[portnum]) < 0 )
      {
 	/* We failed doing that */
 	OWERROR(OWERROR_SYSTEM_RESOURCE_INIT_FAILED);
 	perror("owAcquire: failed to set attributes");
-	close(fd[portnum]);
      }
    
    /* Close the port */
@@ -134,6 +138,7 @@ void owRelease(int portnum)
 	OWERROR(OWERROR_SYSTEM_RESOURCE_INIT_FAILED);
 	perror("owAcquire: failed to close port");
      }
+   fd[portnum] = -1;
 
    /* we should return an error condition here but MAXIMS API is 
     * badly designed */
