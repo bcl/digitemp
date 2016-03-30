@@ -1,3 +1,6 @@
+/* include files */
+#include <sys/types.h>
+
 /* Prototypes for userial driver functions */
 
 /* From other low level userial files */

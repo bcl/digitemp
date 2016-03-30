@@ -28,6 +28,7 @@
 //  version 2.00
 
 // Include files
+#include <sys/types.h>
 #include "ownet.h"
 
 // Local subroutines
