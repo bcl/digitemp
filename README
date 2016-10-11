@@ -232,7 +232,13 @@ the sensor readings, separated by tabs. This makes it easy to import the data
 into a spreadsheet program. The data is output in Centigrade when -o2 is used
 and Fahrenheit when -o3 is used.
 
-  The other option is to use a format specifier string. To do this you pass
+  Using -o4 or -o5 will output all the sensor readings on a single line like:
+1476177670       23.22   1.33    12.69
+
+  Like -o2 and -o3 except the first number is the elapsed time since
+1970-01-01 00:00:00 (unixtime).
+
+The other option is to use a format specifier string. To do this you pass
 the string as the argument to -o, like this:
   -o"%b %d %H:%M:%S Sensor %s C: %.2C F: %.2F"
 

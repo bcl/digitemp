@@ -40,9 +40,11 @@
 
      Logfile formats:
      1 = (default) - 1 line per sensor, time, C, F
-         1 line for each sample, elapsed time, sensor #1, #2, ... tab separated
-     2 = Reading in C
-     3 = Reading in F
+         1 line for each sample, elapsed time, sensor #1, #2, ... tab seperated
+     2 = (seconds since start of measurement) & Reading in C
+     3 = (seconds since start of measurement) & Reading in F
+     4 = Unixtime(seconds since 1970-01-01 00:00:00) & Reading in C
+     5 = Unixtime(seconds since 1970-01-01 00:00:00) & Reading in F
 
      The format string uses strftime tokens plus 6 special
      ones for digitemp - %s for sensor #, %C for centigrade,
@@ -146,6 +148,8 @@ void usage()
   printf("\nLogfile formats:  1 = One line per sensor, time, C, F (default)\n");
   printf("                  2 = One line per sample, elapsed time, temperature in C\n");
   printf("                  3 = Same as #2, except temperature is in F\n");
+  printf("                  4 = Same as #2, except elapsed time since (1970-01-01 00:00:00)\n");
+  printf("                  5 = Same as #4, except temperature is in F\n");
   printf("        #2 and #3 have the data separated by tabs, suitable for import\n");
   printf("        into a spreadsheet or other graphing software.\n");
   printf("\n        The format string uses strftime tokens plus 5 special ones for\n");
@@ -600,11 +604,13 @@ int log_humidity( int sensor, double temp_c, int humidity, unsigned char *sn )
     switch( log_type )
     {
       /* Multiple Centigrade temps per line */
-      case 2:     sprintf( temp, "\t%3.2f", temp_c );
+      case 2:
+      case 4:     sprintf( temp, "\t%3.2f", temp_c );
                   break;
 
       /* Multiple Fahrenheit temps per line */
-      case 3:     sprintf( temp, "\t%3.2f", c2f(temp_c) );
+      case 3:
+      case 5:     sprintf( temp, "\t%3.2f", c2f(temp_c) );
                   break;
 
       default:
@@ -867,12 +873,14 @@ int read_temperature( int sensor_family, int sensor )
             switch( log_type )
             {
               /* Multiple Centigrade temps per line */
-              case 2:     sprintf( temp, "\t%3.2f", temp_c );
+              case 2:
+              case 4:     sprintf( temp, "\t%3.2f", temp_c );
                           log_string( temp );
                           break;
 
               /* Multiple Fahrenheit temps per line */
-              case 3:     sprintf( temp, "\t%3.2f", c2f(temp_c) );
+              case 3:
+              case 5:     sprintf( temp, "\t%3.2f", c2f(temp_c) );
                           log_string( temp );
                           break;
 
@@ -898,9 +906,11 @@ int read_temperature( int sensor_family, int sensor )
               switch( log_type )
               {
             	/* Multiple Centigrade temps per line */
-                case 2:
+                 case 2:
+                 case 4:
                  /* Multiple Fahrenheit temps per line */
-                 case 3:     sprintf( temp, "\t%3.2f", (double) 0 );
+                 case 3:
+                 case 5:     sprintf( temp, "\t%3.2f", (double) 0 );
                              log_string( temp );
                              break;
              
@@ -950,7 +960,9 @@ int read_counter( int sensor_family, int sensor )
         {
           /* Multiple Centigrade temps per line */
           case 2:
-          case 3:     sprintf( temp, "\t%ld", counter_value );
+          case 3:
+          case 4:
+          case 5:     sprintf( temp, "\t%ld", counter_value );
                       log_string( temp );
                       break;
 
@@ -959,7 +971,7 @@ int read_counter( int sensor_family, int sensor )
                       break;
         } /* switch( log_type ) */
       }
-    }    
+    }
   } else if( sensor_family == DS2423_FAMILY ) {
     /* Read Pages 14, 15 */
     for( page=14; page<=15; page++ )
@@ -971,7 +983,9 @@ int read_counter( int sensor_family, int sensor )
         {
           /* Multiple Centigrade temps per line */
           case 2:
-          case 3:     sprintf( temp, "\t%ld", counter_value );
+          case 3:
+          case 4:
+          case 5:     sprintf( temp, "\t%ld", counter_value );
                       log_string( temp );
                       break;
 
@@ -980,7 +994,7 @@ int read_counter( int sensor_family, int sensor )
                       break;
         } /* switch( log_type ) */
       }
-    }    
+    }
   }
 
   return FALSE;
@@ -1018,14 +1032,16 @@ int read_ds2406( int sensor_family, int sensor )
       switch( log_type )
       {
         /* Multiple Centigrade temps per line */
-        case 2:     sprintf( temp, "\t%02x,%02x", pio>>8, pio&0xff );
+        case 2:
+        case 4:     sprintf( temp, "\t%02x,%02x", pio>>8, pio&0xff );
                     break;
 
         /* Multiple Fahrenheit temps per line */
-        case 3:     sprintf( temp, "\t%02x,%02x", pio>>8, pio&0xff);
+        case 3:
+        case 5:     sprintf( temp, "\t%02x,%02x", pio>>8, pio&0xff);
                     break;
 
-        default:    
+        default:
                     sprintf( time_format, "%%b %%d %%H:%%M:%%S Sensor %d PIO: %02x,%02x, PIO-A: %s%s", sensor, pio>>8, pio&0xff,
 			((pio&0x1000)!=0)? // Port A latch: there was a change
 				(((pio&0x0400)!=0)?
@@ -2653,6 +2669,13 @@ int main( int argc, char *argv[] )
   
   /* Record the starting time */
   start_time = time(NULL);
+  switch (log_type) {
+    case 4:
+    case 5:   start_time = 0; /* time(NULL);*/ /* Unixtime instead of relativ to now */
+              break;
+    default:
+              break;
+  }
 
   /* Sample the prescribed number of times, 0=infinity */
   for( x = 0;num_samples==0 || x < num_samples; x++ )
@@ -2666,7 +2689,9 @@ int main( int argc, char *argv[] )
          start of the line
        */
       case 2:
-      case 3:	sprintf(temp, "%ld", elapsed_time );
+      case 3:
+      case 4:
+      case 5:	sprintf(temp, "%ld", elapsed_time );
                 log_string( temp );
 		break;
       default:
@@ -2692,7 +2717,9 @@ int main( int argc, char *argv[] )
          start of the line
        */
       case 2:
-      case 3:	log_string( "\n" );
+      case 3:
+      case 4:
+      case 5:	log_string( "\n" );
 		break;
       default:
 		break;
