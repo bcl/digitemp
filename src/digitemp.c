@@ -161,6 +161,7 @@ void usage()
   printf("        The counter format string has 2 special specifiers:\n");
   printf("        %%n is the counter # and %%C is the count in decimal.\n");
   printf("        The humidity format uses %%h for the humidity in percent\n\n");
+  printf("        The logfile may contain strftime pattern to format the filename\n");
 }
 
 
@@ -503,7 +504,12 @@ int log_string( char *line )
   
 
   if( log_file[0] != 0 )
-  {  
+  {
+    time_t now = time(NULL);
+
+    /* update log_file name according to current time */
+    strftime(log_file, sizeof(log_file) - 1, tmp_log_file, gmtime(&now));
+
     if( (fd = open( log_file, O_CREAT | O_WRONLY | O_APPEND,
                           S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH ) ) == -1 )
     {
