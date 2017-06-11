@@ -1421,8 +1421,6 @@ int read_device( struct _roms *sensor_list, int sensor )
 	    break;
 	  }
   	  // else - drop through to DS1822
-    case DS1820_FAMILY:
-    case DS1822_FAMILY:
     case DS18B20_FAMILY:
     if( setDS & owAccess(0) ) {
       /* this is for 18B20 only */
@@ -1447,6 +1445,8 @@ int read_device( struct _roms *sensor_list, int sensor )
 	printf("COPY_SPAD\n");
       msDelay(20);
     }
+    case DS1820_FAMILY:
+    case DS1822_FAMILY:
 
       status = read_temperature( sensor_family, sensor ); // also for DS28EA00
       break;
