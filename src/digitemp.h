@@ -47,6 +47,19 @@
 #define DS2408_FAMILY	0x29
 #define DS2413_FAMILY	0x3A
 
+/* DS18B20 commands */
+#define DS_READ_ROM 0x33
+#define DS_OVERDRIVE 0x3c
+#define DS_CONVERT_TEMP 0x44
+#define DS_COPY_SPAD 0x48
+#define DS_WRITE_SPAD 0x4e
+#define DS_MATCH_ROM 0x55
+#define DS_RPWRSUPPLY 0xb4
+#define DS_RECEEPROM 0xb8
+#define DS_READ_SPAD 0xbe
+#define DS_SKIP_ROM 0xcc
+#define DS_ALARMSEARCH 0xec
+#define DS_SEARCH 0xf0
 
 /* Coupler related definitions */
 #define SWITCH_FAMILY      0x1F

@@ -84,8 +84,12 @@
 
 extern char 	*optarg;              
 extern int	optind, opterr, optopt;
-
 extern const char dtlib[];			/* Library Used            */
+  uint8_t dsTH = 30;
+  uint8_t dsTL = 16;
+  uint8_t dsPrec = ((0b10 << 5) | 0b11111);
+  uint8_t setDS = 0;
+  int8_t ch;
  
 char serial_port[1024],				/* Path to the serial port */
      tmp_serial_port[1024],
@@ -115,6 +119,20 @@ unsigned char Last2409[9];                      /* Last selected coupler   */
 int	global_msec = 10;			/* For ReadCOM delay       */
 int	global_msec_max = 15;
 
+void print_taddr(uint8_t *dsp, uint8_t dlen, char *endl) {
+  printf("%02X-%02X%02X%02X%02X%02X%02X",
+          dsp[0], dsp[6], dsp[5], dsp[4], dsp[3], dsp[2], dsp[1]);
+  if (endl) printf("%s", endl);
+}
+
+void print_ds(uint8_t *dsp, uint8_t dlen, char *sep, char *endl) {
+  while (dlen--) {
+    printf("%02X", *dsp++);
+    if (dlen && sep) printf("%s", sep);
+  }
+  if (endl) printf("%s", endl);
+}
+
 /* ----------------------------------------------------------------------- *
    Print out the program usage
  * ----------------------------------------------------------------------- */
@@ -123,7 +141,8 @@ void usage()
   printf(BANNER_1);
   printf(BANNER_2);
   printf(BANNER_3, dtlib );		         /* Report Library version */
-  printf("\nUsage: digitemp [-s -i -I -U -l -r -v -t -a -d -n -o -c]\n");
+  printf("\nUsage: digitemp [-s -i -I -U -l -r -v -t -a -d -n -o -c][-L th:tl:prec]\n");
+
   printf("                -i                            Initialize .digitemprc file\n");
   printf("                -I                            Initialize .digitemprc file w/sorted serial #s\n");
   printf("                -w                            Walk the full device tree\n");
@@ -143,6 +162,8 @@ void usage()
   printf("                -o 2                          Output format for logfile\n");
   printf("                -o\"output format string\"      See description below\n");
   printf("                -H\"Humidity format string\"    See description below\n");
+  printf("\t-L TH:TL:prec - set TH:TL:prec, prec - dec. or 0xhex (0x1f-0x7f)\n")
+;
   printf("\nLogfile formats:  1 = One line per sensor, time, C, F (default)\n");
   printf("                  2 = One line per sample, elapsed time, temperature in C\n");
   printf("                  3 = Same as #2, except temperature is in F\n");
@@ -1401,9 +1422,33 @@ int read_device( struct _roms *sensor_list, int sensor )
 	    break;
 	  }
   	  // else - drop through to DS1822
+    case DS18B20_FAMILY:
+    if( setDS & owAccess(0) ) {
+      /* this is for 18B20 only */
+      uint8_t spad[4];
+      uint8_t *sp = spad;
+
+      printf("dsTH %d, dsTL %d, dsPrec 0x%x\n", dsTH, dsTL, dsPrec);
+
+      *sp++ = DS_WRITE_SPAD;
+      *sp++ = dsTH;
+      *sp++ = dsTL;
+      *sp++ = dsPrec;
+
+      /* Send the block */
+      if( owBlock( 0, FALSE, spad, 4 ) ) {
+	printf("WRITE_SPAD\n");
+	print_ds(spad, 4, NULL, "\n");
+      }
+      msDelay(10);
+      spad[0] = DS_COPY_SPAD;
+      if( owBlock( 0, FALSE, spad, 1 ) )
+	printf("COPY_SPAD\n");
+      msDelay(20);
+    }
     case DS1820_FAMILY:
     case DS1822_FAMILY:
-    case DS18B20_FAMILY:
+
       status = read_temperature( sensor_family, sensor ); // also for DS28EA00
       break;
 
@@ -2376,7 +2421,7 @@ int main( int argc, char *argv[] )
   strcpy( counter_format, "%b %d %H:%M:%S Sensor %s #%n %C" );
   strcpy( humidity_format, "%b %d %H:%M:%S Sensor %s C: %.2C F: %.2F H: %h%%" );
   strcpy( conf_file, ".digitemprc" );
-  strcpy( option_list, "?ThqiaAvwr:f:s:l:t:d:n:o:c:O:H:" );
+  strcpy( option_list, "?ThqiaAvwr:f:s:l:t:d:n:o:c:O:H:L:" );
 
 
   /* Command line options override any .digitemprc options temporarily	*/
@@ -2491,6 +2536,12 @@ int main( int argc, char *argv[] )
       case '?': usage();
       		exit(EXIT_HELP);
       		break;
+      case 'L':
+		ch = sscanf(optarg, "%hhi:%hhi:%hhi", &dsTH, &dsTL, &dsPrec);
+        	if ( ch != 3 || (dsPrec & 0x1f) < 0x1f || dsPrec > 0x7f)
+			usage(argv[0]);
+		setDS = 1;
+		break;
     
       default:	break;
     } /* switch getopt */
