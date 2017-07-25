@@ -266,9 +266,10 @@ float Volt_Reading(int portnum, int vdd, int *cad)
 
 }
 
+/* Return the temperature (in C) or -999.0 if there was a problem */
 double Get_Temperature(int portnum)
 {
-   double ret=-1.0;
+   double ret=-999.0;
    uchar send_block[50];
    int send_cnt=0;
    int i;
@@ -294,7 +295,7 @@ double Get_Temperature(int portnum)
       send_block[send_cnt++] = 0x00;
 
       if(!owBlock(portnum,FALSE,send_block,send_cnt))
-         return FALSE;
+         return ret;
 
       send_cnt = 0;
    }
