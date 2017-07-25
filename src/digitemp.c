@@ -1070,55 +1070,62 @@ int read_ds2406( int sensor_family, int sensor )
    ----------------------------------------------------------------------- */
 int read_ds2438( int sensor_family, int sensor )
 {
-  double	temperature;
+  double	temp_c;
   float		vdd,
   		ad;
   char		temp[1024],
   		time_format[160];
   time_t	mytime;
   int           cad = 0;
+  int           try;
+  int           result = FALSE;
 
-  
-  if( sensor_family == DS2438_FAMILY )
+  for( try = 0; try < MAX_READ_TRIES; try++ )
   {
-    temperature = Get_Temperature(0);
+    /* Read the temperature */
+    temp_c = Get_Temperature(0);
+    if (temp_c == -999.0)
+        return result;
 
-    /* Read Vdd */
-    vdd = Volt_Reading(0, 1, &cad);
-
-    /* Read A/D */
-    ad = Volt_Reading(0, 0, NULL);
-
-    mytime = time(NULL);
-    if( mytime )
+    /* Read Vdd, the supply voltage */
+    if( (vdd = Volt_Reading(0, 1, &cad)) != -1.0 )
     {
-      /* Log the temperature */
-      switch( log_type )
+      /* Read A/D reading from the humidity sensor */
+      if( (ad = Volt_Reading(0, 0, NULL)) != -1.0 )
       {
-        /* Multiple Centigrade temps per line */
-        case 2:     sprintf( temp, "\t%3.2f", temperature );
-                    break;
-
-        /* Multiple Fahrenheit temps per line */
-        case 3:     sprintf( temp, "\t%3.2f", c2f(temperature) );
-                    break;
-
-        default:    
-                    sprintf( time_format, "%%b %%d %%H:%%M:%%S Sensor %d VDD: %0.2f AD: %0.2f CAD: %d C: %0.2f", sensor, vdd, ad, cad, temperature );
-                    /* Handle the time format tokens */
-                    strftime( temp, 1024, time_format, localtime( &mytime ) );
-                    strcat( temp, "\n" );
-                    break;
-      } /* switch( log_type ) */
-    } else {
-      sprintf( temp, "Time Error\n" );
+        result = TRUE;
+        break;
+      }
     }
 
-    /* Log it to stdout, logfile or both */
-    log_string( temp );
+    owTouchReset(0);
+    msDelay(read_time);
   }
 
-  return FALSE;
+  /* Log the temperature */
+  mytime = time(NULL);
+  switch( log_type )
+  {
+      /* Multiple Centigrade temps per line */
+      case 2:     sprintf(temp, "\t%3.2f", temp_c);
+                  break;
+
+      /* Multiple Fahrenheit temps per line */
+      case 3:     sprintf(temp, "\t%3.2f", c2f(temp_c));
+                  break;
+
+      default:
+                  sprintf(time_format, "%%b %%d %%H:%%M:%%S Sensor %d VDD: %0.2f AD: %0.2f CAD: %d C: %0.2f", sensor, vdd, ad, cad, temp_c);
+                  /* Handle the time format tokens */
+                  strftime(temp, 1024, time_format, localtime(&mytime));
+                  strcat(temp, "\n");
+                  break;
+  } /* switch( log_type ) */
+
+  /* Log it to stdout, logfile or both */
+  log_string(temp);
+
+  return TRUE;
 }
 
 
@@ -1181,6 +1188,8 @@ int read_humidity( int sensor_family, int sensor )
   {
     /* Read the temperature */
     temp_c = Get_Temperature(0);
+    if (temp_c == -999.0)
+        return result;
 
     /* Read Vdd, the supply voltage */
     if( (sup_voltage = Volt_Reading(0, 1, NULL)) != -1.0 )
