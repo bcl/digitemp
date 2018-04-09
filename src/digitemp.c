@@ -1194,35 +1194,32 @@ int read_humidity( int sensor_family, int sensor )
   double	temp_c;			/* Converted temperature in degrees C */
   float		sup_voltage,		/* Supply voltage in volts            */
 		hum_voltage,		/* Humidity sensor voltage in volts   */
-		humidity;		/* Calculated humidity in %RH         */
+		humidity = 0.0;		/* Calculated humidity in %RH         */
   unsigned char	TempSN[8];
   int		try;  
+  int           result = FALSE;
 	
   for( try = 0; try < MAX_READ_TRIES; try++ )
   {
+    /* Read the temperature */
+    temp_c = Get_Temperature(0);
+
     /* Read Vdd, the supply voltage */
     if( (sup_voltage = Volt_Reading(0, 1, NULL)) != -1.0 )
     {
       /* Read A/D reading from the humidity sensor */
       if( (hum_voltage = Volt_Reading(0, 0, NULL)) != -1.0 )
       {
-        /* Read the temperature */
-        temp_c = Get_Temperature(0);
-
         /* Convert the measured voltage to humidity */
         humidity = (((hum_voltage/sup_voltage) - 0.16) * 161.29)
                       / (1.0546 - (0.00216 * temp_c));
-	if( humidity > 100.0 ) 
-	  humidity = 100.0;
-	else if( humidity < 0.0 )
-	  humidity = 0.0;
+        if( humidity > 100.0 )
+          humidity = 100.0;
+        else if( humidity < 0.0 )
+          humidity = 0.0;
 
-        /* Log the temperature and humidity */
-        owSerialNum( 0, &TempSN[0], TRUE );
-        log_humidity( sensor, temp_c, humidity, TempSN );
-
-        /* Good conversion finished */
-        return TRUE;
+        result = TRUE;
+        break;
       }
     }
 
@@ -1230,7 +1227,11 @@ int read_humidity( int sensor_family, int sensor )
     msDelay(read_time);
   }
 
-  return FALSE;
+  /* Log the temperature and humidity */
+  owSerialNum( 0, &TempSN[0], TRUE );
+  log_humidity( sensor, temp_c, humidity, TempSN );
+
+  return result;
 }
 
 
@@ -1437,23 +1438,24 @@ int read_device( struct _roms *sensor_list, int sensor )
       status = read_counter( sensor_family, sensor );
       break;
 
-	case DS2438_FAMILY:
-		// What type is it?
-		{
-		int page;
-		for( page=3; page<8; page++)
-		{
-			get_ibl_type( 0, page, 0);
-      	}}
-		if( opts & OPT_DS2438 )
-		{
-			status = read_ds2438( sensor_family, sensor );
-		} else {
-			status = read_humidity( sensor_family, sensor );
-		}
-		break;
-  }
-  
+    case DS2438_FAMILY:
+    // What type is it?
+        {
+            int page;
+            for( page=3; page<8; page++)
+            {
+                get_ibl_type( 0, page, 0);
+            }
+        }
+        if( opts & OPT_DS2438 )
+        {
+            status = read_ds2438( sensor_family, sensor );
+        } else {
+            status = read_humidity( sensor_family, sensor );
+        }
+        break;
+    }
+
   return status;
 }
 
