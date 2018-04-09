@@ -211,7 +211,8 @@ device connected, even if it isn't a sensor that DigiTemp supports.
   -------------------
 
   To log temperatures to a logfile instead of to the console you use the
--l command line option. I have a cron job that runs every 30 minutes and
+-l command line option. The logfile name may use strftime format to generate
+the filename. I have a cron job that runs every 30 minutes and
 logs the temperatures to a file called /var/log/temperature. The cron entry
 look like this:
 
@@ -232,7 +233,13 @@ the sensor readings, separated by tabs. This makes it easy to import the data
 into a spreadsheet program. The data is output in Centigrade when -o2 is used
 and Fahrenheit when -o3 is used.
 
-  The other option is to use a format specifier string. To do this you pass
+  Using -o4 or -o5 will output all the sensor readings on a single line like:
+1476177670       23.22   1.33    12.69
+
+  Like -o2 and -o3 except the first number is the elapsed time since
+1970-01-01 00:00:00 (unixtime).
+
+The other option is to use a format specifier string. To do this you pass
 the string as the argument to -o, like this:
   -o"%b %d %H:%M:%S Sensor %s C: %.2C F: %.2F"
 
@@ -329,6 +336,12 @@ this:
   This outputs the data as tab separated Centigrade readings to a file named
 data1.txt in the current directory.
 
+  To log continously every 10 seconds into files named with current date:
+
+    digitemp -a -d10 -n0 -o4 -ltemperature-%Y%m%d.txt
+
+  This outputs the data as tab separated Centigrade readings to files named
+temperature-20161011.txt, temperature-20161011.txt, ... in the current directory.
 
   Web scripts
   -----------
