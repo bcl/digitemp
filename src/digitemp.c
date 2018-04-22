@@ -674,67 +674,49 @@ void show_scratchpad( unsigned char *scratchpad, int sensor_family )
   char temp[80];
   int i;
   
-  if( log_file[0] != 0 )
+  /* Log and/or print the scratchpad diagnostics */
+  switch( sensor_family )
   {
-    switch( sensor_family )
-    {
-      case DS1820_FAMILY:
-        sprintf( temp, "  Temperature   : 0x%02X\n", scratchpad[1] );
-        sprintf( temp, "  Sign          : 0x%02X\n", scratchpad[2] );
-        sprintf( temp, "  TH            : 0x%02X\n", scratchpad[3] );
-        sprintf( temp, "  TL            : 0x%02X\n", scratchpad[4] );
-        sprintf( temp, "  Remain        : 0x%02X\n", scratchpad[7] );
-        sprintf( temp, "  Count Per C   : 0x%02X\n", scratchpad[8] );
-        sprintf( temp, "  CRC           : 0x%02X\n", scratchpad[9] );
-        break;
-
-      case DS18B20_FAMILY:
-      case DS1822_FAMILY:
-      case DS28EA00_FAMILY:
-        sprintf( temp, "  Temp. LSB     : 0x%02X\n", scratchpad[1] );
-        sprintf( temp, "  Temp. MSB     : 0x%02X\n", scratchpad[2] );
-        sprintf( temp, "  TH            : 0x%02X\n", scratchpad[3] );
-        sprintf( temp, "  TL            : 0x%02X\n", scratchpad[4] );
-        sprintf( temp, "  Config Reg.   : 0x%02X\n", scratchpad[5] );
-        sprintf( temp, "  CRC           : 0x%02X\n", scratchpad[9] );
-        break;
-        
-      case DS2422_FAMILY:
-      case DS2423_FAMILY:
+    case DS1820_FAMILY:
+      sprintf( temp, "  Temperature   : 0x%02X\n", scratchpad[1] );
+      log_string( temp );
+      sprintf( temp, "  Sign          : 0x%02X\n", scratchpad[2] );
+      log_string( temp );
+      sprintf( temp, "  TH            : 0x%02X\n", scratchpad[3] );
+      log_string( temp );
+      sprintf( temp, "  TL            : 0x%02X\n", scratchpad[4] );
+      log_string( temp );
+      sprintf( temp, "  Remain        : 0x%02X\n", scratchpad[7] );
+      log_string( temp );
+      sprintf( temp, "  Count Per C   : 0x%02X\n", scratchpad[8] );
+      log_string( temp );
+      sprintf( temp, "  CRC           : 0x%02X\n", scratchpad[9] );
+      log_string( temp );
+      break;
+  
+    case DS18B20_FAMILY:
+    case DS1822_FAMILY:
+    case DS28EA00_FAMILY:
+      sprintf( temp, "  Temp. LSB     : 0x%02X\n", scratchpad[1] );
+      log_string( temp );
+      sprintf( temp, "  Temp. MSB     : 0x%02X\n", scratchpad[2] );
+      log_string( temp );
+      sprintf( temp, "  TH            : 0x%02X\n", scratchpad[3] );
+      log_string( temp );
+      sprintf( temp, "  TL            : 0x%02X\n", scratchpad[4] );
+      log_string( temp );
+      sprintf( temp, "  Config Reg.   : 0x%02X\n", scratchpad[5] );
+      log_string( temp );
+      sprintf( temp, "  CRC           : 0x%02X\n", scratchpad[9] );
+      log_string( temp );
+      break;
       
-        break;  
-    } /* sensor_family switch */
-  } else {
-    switch( sensor_family )
-    {
-      case DS1820_FAMILY:
-        printf("  Temperature   : 0x%02X\n", scratchpad[1] );
-        printf("  Sign          : 0x%02X\n", scratchpad[2] );
-        printf("  TH            : 0x%02X\n", scratchpad[3] );
-        printf("  TL            : 0x%02X\n", scratchpad[4] );
-        printf("  Remain        : 0x%02X\n", scratchpad[7] );
-        printf("  Count Per C   : 0x%02X\n", scratchpad[8] );
-        printf("  CRC           : 0x%02X\n", scratchpad[9] );
-        break;
-
-      case DS18B20_FAMILY:
-      case DS1822_FAMILY:
-      case DS28EA00_FAMILY:
-        printf( "  Temp. LSB     : 0x%02X\n", scratchpad[1] );
-        printf( "  Temp. MSB     : 0x%02X\n", scratchpad[2] );
-        printf( "  TH            : 0x%02X\n", scratchpad[3] );
-        printf( "  TL            : 0x%02X\n", scratchpad[4] );
-        printf( "  Config Reg.   : 0x%02X\n", scratchpad[5] );
-        printf( "  CRC           : 0x%02X\n", scratchpad[9] );
-        break;
-
-      case DS2422_FAMILY:
-      case DS2423_FAMILY:
-      
-        break;  
-    } /* sensor_family switch */
-  } /* if log_file */
-
+    case DS2422_FAMILY:
+    case DS2423_FAMILY:
+    
+      break;  
+  } /* sensor_family switch */
+  
   /* Dump the complete contents of the scratchpad */
   for( i = 0; i < 10; i++ )
   {
