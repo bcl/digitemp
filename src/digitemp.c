@@ -501,19 +501,19 @@ int build_cf( char *time_format, char *format, int sensor, int page,
 int log_string( char *line )
 {
   int fd=0;
-  
+  char time_log_file[1024];
 
   if( log_file[0] != 0 )
   {
     time_t now = time(NULL);
 
-    /* update log_file name according to current time */
-    strftime(log_file, sizeof(log_file) - 1, tmp_log_file, gmtime(&now));
+    /* Update time_log_file name according to current time and logfile format */
+    strftime(time_log_file, sizeof(log_file) - 1, log_file, gmtime(&now));
 
-    if( (fd = open( log_file, O_CREAT | O_WRONLY | O_APPEND,
+    if( (fd = open( time_log_file, O_CREAT | O_WRONLY | O_APPEND,
                           S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH ) ) == -1 )
     {
-      printf("Error opening logfile: %s\n", log_file );
+      printf("Error opening logfile: %s\n", time_log_file );
       return -1;
     }
     if( write( fd, line, strlen( line ) ) == -1)
