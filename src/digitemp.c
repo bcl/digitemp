@@ -2668,12 +2668,11 @@ int main( int argc, char *argv[] )
 
   
   /* Record the starting time */
-  start_time = time(NULL);
   switch (log_type) {
     case 4:
-    case 5:   start_time = 0; /* time(NULL);*/ /* Unixtime instead of relativ to now */
+    case 5:   start_time = 0;           /* Relative to 1970-01-01 00:00:00 (Unixtime) */
               break;
-    default:
+    default:  start_time = time(NULL);  /* Relative to now */
               break;
   }
 
