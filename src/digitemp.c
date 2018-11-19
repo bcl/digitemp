@@ -1559,7 +1559,12 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
       /* Main LAN sensors */
       ptr = strtok( NULL, " \t\n" );
       sensors = atoi( ptr );
-      
+      if ( sensors >= sensor_list->max ) {
+          fprintf( stderr, "Error, too many ROM entries. Check SENSORS value.\n");
+          fclose( fp );
+          return -1;
+      }
+
       /* Read the 8 byte ROM address */
       for( x = 0; x < 8; x++ )
       {
