@@ -2,7 +2,7 @@
 
 Summary:           Dallas Semiconductor 1-wire device reading console application
 Name:              digitemp
-Version:           3.7.1
+Version:           3.7.2
 Release:           1%{?dist}
 License:           GPLv2+
 Group:             Applications/System
@@ -59,6 +59,24 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/%{name}.*
 
 %changelog
+* Mon Nov 19 2018 Brian C. Lane <bcl@brianlane.com>  - 3.7.2-1
+- Fix digitemp.spec Version in bumpver target (bcl)
+- Make sure strncpy uses are null-terminated (bcl)
+- Add a check for ROM number vs. SENSORS count (bcl)
+- Log the scratchpad diagnostics (bcl)
+- Bump Copyright Year to 2018 (bcl)
+- Fix strftime use of log_file (bcl)
+- Add strftime formating to logfile name (peje)
+- Clean up the start_time switch statement usage (bcl)
+- Add log_type 4 & 5 (peje)
+- Check for bad Get_Temperature result (bcl)
+- Fix the return value of Get_Temperature in ad26.c (bcl)
+- Display DS2438 temperature even if humidity calculation fails. (bcl)
+- Always include types.h and time.h (bcl)
+- Bump copyright year to 2016 (bcl)
+- Add bumpver target (bcl)
+- Spelling corrections (ryan)
+
 * Sat Dec 12 2015 Brian C. Lane <bcl@redhat.com> 3.7.1-1
 - Update version to 3.7.1
 - Fix version in digitemp.h
