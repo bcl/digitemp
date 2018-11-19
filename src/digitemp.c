@@ -1520,21 +1520,26 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
     {
       ptr = strtok( NULL, " \t\n" );
       strncpy( serial_port, ptr, sizeof(serial_port)-1 );
+      serial_port[sizeof(serial_port)-1] = 0x00;
     } else if( strncasecmp( "LOG_TYPE", ptr, 8 ) == 0 ) {
       ptr = strtok( NULL, " \t\n");
       log_type = atoi( ptr );
     } else if( strncasecmp( "LOG_FORMAT", ptr, 10 ) == 0 ) {
       ptr = strtok( NULL, "\"\n");
       strncpy( temp_format, ptr, sizeof(temp_format)-1 );
+      temp_format[sizeof(temp_format)-1] = 0x00;
     } else if( strncasecmp( "CNT_FORMAT", ptr, 10 ) == 0 ) {
       ptr = strtok( NULL, "\"\n");
       strncpy( counter_format, ptr, sizeof(counter_format)-1 );
+      counter_format[sizeof(counter_format)-1] = 0x00;
     } else if( strncasecmp( "HUM_FORMAT", ptr, 10 ) == 0 ) {
       ptr = strtok( NULL, "\"\n");
       strncpy( humidity_format, ptr, sizeof(humidity_format)-1 );
+      humidity_format[sizeof(humidity_format)-1] = 0x00;
     } else if( strncasecmp( "LOG", ptr, 3 ) == 0 ) {
       ptr = strtok( NULL, " \t\n" );
       strncpy( log_file, ptr, sizeof(log_file)-1 );
+      log_file[sizeof(log_file)-1] = 0x00;
     } else if( strncasecmp( "FAIL_TIME", ptr, 9 ) == 0 ) {
 
     } else if( strncasecmp( "READ_TIME", ptr, 9 ) == 0 ) {
@@ -2411,6 +2416,7 @@ int main( int argc, char *argv[] )
       case 'c': if( optarg )			/* Configuration file	*/
 		{
 		  strncpy( conf_file, optarg, sizeof( conf_file ) - 1 );
+                  conf_file[sizeof(conf_file)-1] = 0x00;
 		}
 		break;
 
@@ -2432,12 +2438,14 @@ int main( int argc, char *argv[] )
       case 's': if(optarg)			/* Serial port		*/
       		{
       		  strncpy( tmp_serial_port, optarg, sizeof(tmp_serial_port) - 1 );
+                  tmp_serial_port[sizeof(tmp_serial_port) - 1] = 0x00;
       		}
       		break;
       		
       case 'l': if(optarg)			/* Log Filename		*/
       		{
       		  strncpy( tmp_log_file, optarg, sizeof( tmp_log_file ) - 1);
+                  tmp_log_file[sizeof( tmp_log_file ) - 1] = 0x00;
       		}
       		break;
       		
@@ -2474,10 +2482,12 @@ int main( int argc, char *argv[] )
 		    tmp_log_type = atoi(optarg);
 		  } else {
 		    /* Not a nuber, get the string */
-                    if( strlen( optarg ) > sizeof(tmp_temp_format)-1 )
+                    if( strlen( optarg ) > sizeof(tmp_temp_format)-1 ) {
                       printf("Temperature format string too long! > %d\n", (int) sizeof(tmp_temp_format)-1);
-                    else
+                    } else {
                       strncpy( tmp_temp_format, optarg, sizeof(tmp_temp_format)-1 );
+                      tmp_temp_format[sizeof(tmp_temp_format)-1] = 0x00;
+                    }
 		    tmp_log_type=0;
 		  }
 		}
@@ -2485,19 +2495,23 @@ int main( int argc, char *argv[] )
 		
       case 'O': if(optarg)			/* Counter Logfile format	*/
 		{
-                  if( strlen( optarg ) > sizeof(tmp_counter_format)-1 )
+                  if( strlen( optarg ) > sizeof(tmp_counter_format)-1 ) {
                     printf("Counter format string too long! > %d\n", (int) sizeof(tmp_counter_format)-1);
-                  else
+                  } else {
                     strncpy( tmp_counter_format, optarg, sizeof(tmp_counter_format)-1 );
+                    tmp_counter_format[sizeof(tmp_counter_format)-1] = 0x00;
+                  }
 		}
 		break;
 		
       case 'H': if(optarg)			/* Humidity Logfile format	*/
 		{
-                  if( strlen( optarg ) > sizeof(tmp_humidity_format)-1 )
+                  if( strlen( optarg ) > sizeof(tmp_humidity_format)-1 ) {
                     printf("Humidity format string too long! > %d\n", (int) sizeof(tmp_humidity_format)-1);
-                  else
+                  } else {
                     strncpy( tmp_humidity_format, optarg, sizeof(tmp_humidity_format)-1 );
+                    tmp_humidity_format[sizeof(tmp_humidity_format)-1] = 0x00;
+                  }
 		}
 		break;
 		
@@ -2532,10 +2546,12 @@ int main( int argc, char *argv[] )
   
   if (tmp_serial_port[0] != 0) {
 	strncpy( serial_port, tmp_serial_port, sizeof(serial_port)-1 );
+        serial_port[sizeof(serial_port)-1] = 0x00;
   }
   
   if (tmp_log_file[0] != 0) {
 	strncpy( log_file, tmp_log_file, sizeof(log_file)-1 );
+        log_file[sizeof(log_file)-1] = 0x00;
   }
   
   if (tmp_log_type != -1) {
@@ -2543,15 +2559,18 @@ int main( int argc, char *argv[] )
     if ( tmp_log_type == 0 )
     {
       strncpy( temp_format, tmp_temp_format, sizeof(temp_format)-1 );
+      temp_format[sizeof(temp_format)-1] = 0x00;
     }
   }
 
   if( tmp_counter_format[0] != 0 ) {
     strncpy( counter_format, tmp_counter_format, sizeof(counter_format)-1 );
+    counter_format[sizeof(counter_format)-1] = 0x00;
   }
   
   if( tmp_humidity_format[0] != 0 ) {
     strncpy( humidity_format, tmp_humidity_format, sizeof(humidity_format)-1 );
+    humidity_format[sizeof(humidity_format)-1] = 0x00;
   }
   
   /* Show the copyright banner? */
