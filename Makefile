@@ -147,7 +147,7 @@ bumpver:
 		tail --lines=+$$(($$cl + 1)) digitemp.spec > speclog ; \
 		(head -n $$cl digitemp.spec ; echo "$$DATELINE" ; make --quiet rpmlog 2>/dev/null ; echo ""; cat speclog) > digitemp.spec.new ; \
 		mv digitemp.spec.new digitemp.spec ; rm -f speclog ; \
-		sed -i "s/Version:\s+$(VERSION)/Version:   $$NEWVERSION/" digitemp.spec ; \
+		sed -i "s/Version:.*$(VERSION)/Version:           $$NEWVERSION/" digitemp.spec ; \
 		sed -i "s/$(VERSION)/$$NEWVERSION/" README ; \
 		sed -i "s/$(VERSION)/$$NEWVERSION/" COPYRIGHT ; \
 		sed -i "s/$(VERSION)/$$NEWVERSION/" ./src/digitemp.h
