@@ -412,69 +412,24 @@ and I will add it to the list at http://www.digitemp.com/users.shtml
     bcl@brianlane.com
     http://www.brianlane.com
 
-Release notes
--------------
-  Version 3.6.0 adds ...
 
-  Version 3.5.0 adds DS1923 Hygrochron support, fixes some small bugs in the
-userial driver. A lockdev bug was fixed (wasn't unlocking when done), a
-crash in free_couplers() was fixed, better error reporting when trying to
-access serial ports that don't exist, compiled for Windows with cygiwn.
-DS2490/9490 support still doesn't work well for me, although others have
-had success with it.
+Problems with Linux Kernel ds2490 driver
+----------------------------------------
 
-  Version 3.4.0 fixes temperature output using -o2 and -o3 log formats with
-the DS2438 sensor.
+The Linux kernel has included a ds2490 driver module for quite some time now.
+This module will conflict with `digitemp_DS2490` use unless you unload it or
+block it from being loaded.  In the past I've recommended using `modprobe -r
+ds2490` to remove the module, but this no longer works correctly on some
+systems (I've tested it on Fedora 32 with kernel 5.10.22).  It locks up the
+`modprobe -r ds2490` process and you need to reboot to clear it.
 
-  Version 3.3.2 fixes the broken DS9097 support that I hosed in v3.3.1 and
-adds a performance patch to DS9097 from Erik Rigtorp that should speed up
-passive adapter operations.
+The preferred way is to create a module blacklist file in
+`/etc/modprobe.d/ds2490-blacklist.conf` with the contents being:
 
-  Version 3.3.1 works with the DS9490R USB adapter using the DS2490 USB to
-1-wire adapter chip. It needs to be run as root, and your version of libusb
-may need to be patched using the patch in the ./contrib directory
+```
+# ds2490 driver interferes with digitemp_DS2490 operation
+blacklist ds2490
+```
 
-  Version 3.3.0 adds support for the DS2490 USB adapter, DS2438 battery monitor
-and AAG TAI-8540 humidity sensor module. Additional format string specifiers
-have been added to handle the humidity reading. See the Initialization section
-below.
-
-  The binary generated when building from source is now digitemp_DS9097,
-digitemp_DS9097U, or digitemp_DS2490 depending on which build you do. You can
-then make a symlink to 'digitemp' for whichever adapter you need to use.
-
-  I now recommend use of the iButtonLink from www.ibuttonlink.com, it is 100%
-compatible with the DS9097U, but has been engineered to work with longer
-networks more reliably.
-
-  Version 3.1.0 adds support for the DS2406 counters. A new output format
-specifier has been added, using the -O option (capital Oh, not lower case).
-I have included my first pass at a python script to log to MySQL and RRD.
-
-  Version 3.0.0 adds support for both the DS9097 passive adapter, and the newer
-DS9097U adapter. It also introduces a better makefile and less CPU usage
-when repeatedly reading multiple sensors.
-
-  Version 2.5 adds compilation under Solaris. A new log option of %R has
-been added to output the serial number in hex in the logging output string.
-The quiet -q option now quiets down the 1-Wire walk and initialize routine so
-that only the important information is output.
-
-  Version 2.4 fixes the problems (finally!) with the DS18B20 and DS1822
-sensors. I have also modified the search and read algorithms so that they
-will work faster when used with a 1-wire hub.
-
-  Version 2.3 adds support for one wire hubs like Simon Atkin's hub that can
-be found at www.simat.enta.net
-
-  Version 2.x.x removes support for the old adapter (based on the one
-described in App. Note 74 from Dallas Semiconductor. Version 1.3 still
-supports the older adapters and is now also released under the GNU General
-Public License). This new version uses the DS9097-U adapter available from
-Dallas Semiconductor. You can order them from their iButton webpage at
-www.ibutton.com
-
-  This adapter is more expensive but is easier to program and support higher
-current capability so that it should work at higher temperatures than the
-previous adapter.
-
+and then reboot. You can also test this by adding `modprobe.blacklist=ds2490` to
+the kernel cmdline at boot time.
