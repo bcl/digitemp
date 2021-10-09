@@ -94,13 +94,15 @@ int build_tf( char *time_format, char *format, int sensor,
 int build_cf( char *time_format, char *format, int sensor, int page,
               unsigned long count, unsigned char *sn );
 int build_af(char *time_format, size_t tf_size, char *format,
-             int sensor, float temp_c, float vdd, float ad, unsigned char *sn);
+             int sensor, float temp_c, float vdd, float ad, float vsens,
+             unsigned char *sn);
 int log_string( char *line );
 int log_temp( int sensor, float temp_c, unsigned char *sn );
 int log_counter( int sensor, int page, unsigned long counter, unsigned char *sn );
 int log_humidity( int sensor, double temp_c, int humidity, unsigned char *sn );
 int log_temperature_voltage(int sensor, double temp_c,
-                            float vdd, float ad, unsigned char *sn);
+                            float vdd, float ad, float vsens,
+                            unsigned char *sn);
 int cmpSN( unsigned char *sn1, unsigned char *sn2, int branch );
 void show_scratchpad( unsigned char *scratchpad, int sensor_family );
 int read_temperature( int sensor_family, int sensor );

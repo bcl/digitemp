@@ -56,8 +56,9 @@
      The counter format uses %n for the counter # and %C for the count 
      in decimal
 
-     The A/D converter (ADC) format uses %Q for VDD and %q for the analog
-     input voltage, measured in Volt.
+     The A/D converter (ADC) format uses %Q for Vdd and %q for the analog
+     input voltage Vad, both measured in Volt; %J gives Vsense, measured
+     in mV.
 
      Remember the case of the token is important!
 
@@ -168,8 +169,8 @@ void usage()
   printf("        The counter format string has 2 special specifiers:\n");
   printf("        %%n is the counter # and %%C is the count in decimal.\n");
   printf("        The humidity format uses %%h for the humidity in percent\n\n");
-  printf("        The A/D converter format uses %%Q for VDD and %%q for the analog\n");
-  printf("        input voltage, measured in Volt.\n\n");
+  printf("        The A/D converter format uses %%Q for Vd and %%q for the analog\n");
+  printf("        input voltage Vad, both measured in Volt; %J gives Vsense in mV.\n\n");
   printf("        The logfile may contain strftime pattern to format the filename\n");
 }
 
@@ -522,7 +523,8 @@ int build_cf( char *time_format, char *format, int sensor, int page,
      1                 OK
    ----------------------------------------------------------------------- */
 int build_af(char *time_format, size_t tf_size, char *format, int sensor,
-             float temp_c, float vdd, float ad, unsigned char *sn)
+             float temp_c, float vdd, float ad, float vsens,
+             unsigned char *sn)
 {
   char *tf_ptr,
     *lf_ptr,
@@ -666,6 +668,27 @@ int build_af(char *time_format, size_t tf_size, char *format, int sensor,
           }
         }
         break;
+      case 'J':
+        /* value of Vsense */
+        /* change specifier to 'f', print value into temp string
+         * and copy that over
+         */
+        *(tk_ptr-1) = 'f';
+        needed = snprintf(temp, sizeof(temp), token, vsens);
+        if (needed > len) {
+          /* Here we have an error condition, the format conversion does
+           * not fit fully into the buffer
+           *
+           * Here we just ignore the token.
+           */
+        } else {
+          tk_ptr = temp;
+          while (*tk_ptr && (len > 0)) {
+            *tf_ptr++ = *tk_ptr++;
+            len -= 1;
+          }
+        }
+        break;
       case 'R':
         /* ROM serial number */
         /* change specifier to 'X' (will be ignored anyway),
@@ -735,7 +758,8 @@ int test_build_af() {
     "abcd%.02F",
     "X-%N",
     "bla_%.02Q",
-    "hex_%.02q"
+    "hex_%.02q",
+    "vsens_%.04J"
   };
   int res;
   size_t bufsize;
@@ -743,7 +767,7 @@ int test_build_af() {
   bzero(outbuf, sizeof(outbuf));
   bufsize = sizeof(outbuf);
   res = build_af(outbuf, bufsize, af_test[0],
-                 0, 0.0, 3.0, 2.56, sn);
+                 0, 0.0, 3.0, 2.56, 5.6143, sn);
   fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
           af_test[0], (int)bufsize, res, outbuf);
 
@@ -751,7 +775,7 @@ int test_build_af() {
     bzero(outbuf, sizeof(outbuf));
     /*bufsize = sizeof(outbuf);*/
     res = build_af(outbuf, bufsize, af_test[0],
-                   0, 0.0, 3.0, 2.56, sn);
+                   0, 0.0, 3.0, 2.56, 5.6143, sn);
     fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
             af_test[0], (int)bufsize, res, outbuf);
   }
@@ -759,7 +783,7 @@ int test_build_af() {
   for (bufsize = 6; bufsize < 10; bufsize += 1) {
     bzero(outbuf, sizeof(outbuf));
     res = build_af(outbuf, bufsize, af_test[1],
-                   0, 0.0, 3.0, 2.56, sn);
+                   0, 0.0, 3.0, 2.56, 5.6143, sn);
     fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
             af_test[1], (int)bufsize, res, outbuf);
   }
@@ -767,7 +791,7 @@ int test_build_af() {
   for (bufsize = 5; bufsize < 11; bufsize += 1) {
     bzero(outbuf, sizeof(outbuf));
     res = build_af(outbuf, bufsize, af_test[2],
-                   0, 0.0, 3.0, 2.56, sn);
+                   0, 0.0, 3.0, 2.56, 5.6143, sn);
     fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
             af_test[2], (int)bufsize, res, outbuf);
   }
@@ -775,7 +799,7 @@ int test_build_af() {
   for (bufsize = 5; bufsize < 11; bufsize += 1) {
     bzero(outbuf, sizeof(outbuf));
     res = build_af(outbuf, bufsize, af_test[3],
-                   0, 0.0, 3.0, 2.56, sn);
+                   0, 0.0, 3.0, 2.56, 5.6143, sn);
     fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
             af_test[3], (int)bufsize, res, outbuf);
   }
@@ -783,7 +807,7 @@ int test_build_af() {
   for (bufsize = 5; bufsize < 11; bufsize += 1) {
     bzero(outbuf, sizeof(outbuf));
     res = build_af(outbuf, bufsize, af_test[4],
-                   0, 0.0, 3.0, 2.56, sn);
+                   0, 0.0, 3.0, 2.56, 5.6143, sn);
     fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
             af_test[4], (int)bufsize, res, outbuf);
   }
@@ -791,7 +815,7 @@ int test_build_af() {
   for (bufsize = 3; bufsize < 11; bufsize += 1) {
     bzero(outbuf, sizeof(outbuf));
     res = build_af(outbuf, bufsize, af_test[5],
-                   0, 0.0, 3.0, 2.56, sn);
+                   0, 0.0, 3.0, 2.56, 5.6143, sn);
     fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
             af_test[5], (int)bufsize, res, outbuf);
   }
@@ -799,7 +823,7 @@ int test_build_af() {
   for (bufsize = 5; bufsize < 11; bufsize += 1) {
     bzero(outbuf, sizeof(outbuf));
     res = build_af(outbuf, bufsize, af_test[6],
-                   0, 0.0, 3.0, 2.56, sn);
+                   0, 0.0, 3.0, 2.56, 5.6143, sn);
     fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
             af_test[6], (int)bufsize, res, outbuf);
   }
@@ -807,10 +831,19 @@ int test_build_af() {
   for (bufsize = 5; bufsize < 11; bufsize += 1) {
     bzero(outbuf, sizeof(outbuf));
     res = build_af(outbuf, bufsize, af_test[7],
-                   0, 0.0, 3.0, 2.56, sn);
+                   0, 0.0, 3.0, 2.56, 5.6143, sn);
     fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
             af_test[7], (int)bufsize, res, outbuf);
   }
+
+  for (bufsize = 6; bufsize < 16; bufsize += 1) {
+    bzero(outbuf, sizeof(outbuf));
+    res = build_af(outbuf, bufsize, af_test[8],
+                   0, 0.0, 3.0, 2.56, 5.6143, sn);
+    fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
+            af_test[8], (int)bufsize, res, outbuf);
+  }
+
   return 0;
 }
 
@@ -965,7 +998,8 @@ int log_humidity( int sensor, double temp_c, int humidity, unsigned char *sn )
    Used with temperature and voltage values from DS2438
    ----------------------------------------------------------------------- */
 int log_temperature_voltage( int sensor, double temp_c,
-                             float vdd, float ad, unsigned char *sn )
+                             float vdd, float ad, float vsens,
+                             unsigned char *sn )
 {
   char	temp[1024],
         time_format[160];
@@ -991,7 +1025,7 @@ int log_temperature_voltage( int sensor, double temp_c,
       default:
         /* Build the time format string from log_format */
         build_af( time_format, sizeof(time_format), adc_format,
-                  sensor, temp_c, vdd, ad, sn );
+                  sensor, temp_c, vdd, ad, vsens, sn );
 
         /* Handle the time format tokens */
         strftime( temp, 1024, time_format, localtime( &mytime ) );
@@ -1446,7 +1480,8 @@ int read_ds2438( int sensor_family, int sensor )
 {
   double	temp_c;
   float		vdd,
-  		ad;
+                ad,
+                vsens;
   int           cad = 0;
   unsigned char TempSN[8];
   int           try;
@@ -1474,9 +1509,15 @@ int read_ds2438( int sensor_family, int sensor )
     msDelay(read_time);
   }
 
-  /* Log the temperature */
+  /* Convert cad into measured voltage: datasheet specifies each unit in
+   * cad value to represent 0.2441 mV.
+   * Note: vsens is in unit mV, whereas vdd and ad are in V
+   */
+  vsens = 0.2441 * cad;
+
+  /* Log the measured values */
   owSerialNum(0, &TempSN[0], TRUE);
-  log_temperature_voltage(sensor, temp_c, vdd, ad, TempSN);
+  log_temperature_voltage(sensor, temp_c, vdd, ad, vsens, TempSN);
 
   return result;
 }
