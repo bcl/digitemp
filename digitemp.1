@@ -93,6 +93,9 @@ See Temperature Format below.
 .TP
 .B \-H"Humidity format string"
 See Humidity Format below.
+.TP
+.B \-V"ADC format"
+See voltage ADC format below.
 .PP
 .SH
 Temperature Format
@@ -156,6 +159,17 @@ with the addition of this format specifier:
 .TP
 .B %h
 is the humidity in 0-100%
+.PP
+.SH
+Voltage Format String
+.PP
+The A/D converter (ADC) format is the same as the temperature format
+string with the addition of two format specifiers:
+.TP
+.B %Q
+for VDD measurement (in unit of Volt), and
+.B %q
+for the analog input voltage (in unit of Volt).
 .PP
 .SH AUTHOR
 This manual page was written by Jes\['u]s Roncero <jesus@roncero.org>,

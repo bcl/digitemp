@@ -37,6 +37,7 @@
      digitemp -o"output format string"  See description below
      digitemp -O"counter format"        See description below
      digitemp -H"Humidity format"       See description below
+     digitemp -V "ADC format"           Define output format for voltages
 
      Logfile formats:
      1 = (default) - 1 line per sensor, time, C, F
@@ -54,6 +55,9 @@
 
      The counter format uses %n for the counter # and %C for the count 
      in decimal
+
+     The A/D converter (ADC) format uses %Q for VDD and %q for the analog
+     input voltage, measured in Volt.
 
      Remember the case of the token is important!
 
@@ -100,6 +104,9 @@ char serial_port[1024],				/* Path to the serial port */
      tmp_counter_format[80],
      humidity_format[80],			/* Format for Humidity readings		*/
      tmp_humidity_format[80],
+     adc_format[80],                     /* Format for A/D converter readings */
+     tmp_adc_format[80],
+
      conf_file[1024],			/* Configuration File      */
      option_list[40];
 int	read_time,				/* Pause during read	   */
@@ -161,6 +168,8 @@ void usage()
   printf("        The counter format string has 2 special specifiers:\n");
   printf("        %%n is the counter # and %%C is the count in decimal.\n");
   printf("        The humidity format uses %%h for the humidity in percent\n\n");
+  printf("        The A/D converter format uses %%Q for VDD and %%q for the analog\n");
+  printf("        input voltage, measured in Volt.\n\n");
   printf("        The logfile may contain strftime pattern to format the filename\n");
 }
 
@@ -496,6 +505,317 @@ int build_cf( char *time_format, char *format, int sensor, int page,
 
 
 /* -----------------------------------------------------------------------
+   Take the log_format string (A/D converter flavour) and parse out the
+   digitemp tags (%*s,  %*C, %*F, %*Q, %*q) including any format
+   specifiers to pass to sprintf. Build a new string
+   with the strftime tokens and the digitemp-obtained values mixed
+   together
+   Input Parameters:
+     time_format       pointer to output string
+     format            pointer to log_format string
+     sensor            internal sensor number
+     vdd               measured value of VDD
+     ad                measured value of the analog input voltage
+     sn                serial number of the sensor
+   Output value:
+     0                 Some error occured
+     1                 OK
+   ----------------------------------------------------------------------- */
+int build_af(char *time_format, size_t tf_size, char *format, int sensor,
+             float temp_c, float vdd, float ad, unsigned char *sn)
+{
+  char *tf_ptr,
+    *lf_ptr,
+    *tk_ptr,
+    token[80],
+    temp[80],
+    c;
+  size_t len;
+  size_t tk_len;
+  int needed;
+
+  if (!time_format || !format || (tf_size == 0)) {
+    return 0;
+  }
+  tf_ptr = time_format;
+  lf_ptr = format;
+  len = tf_size-1; /* to make sure that the trailing 0 character fits */
+
+  while (*lf_ptr) {
+    if (*lf_ptr != '%') {
+      if (len > 0) {
+        *tf_ptr++ = *lf_ptr++;
+        len -= 1;
+      } else {
+        /* we are done since no more space left in result string */
+        *tf_ptr = 0;
+        break;
+      }
+    } else {
+      /* Found token starting with '%', parse it and see if it is one
+       * for digitemp special treatment
+       */
+      /* Save initial pointer */
+      tk_ptr = token;
+      tk_len = sizeof(token)-1;
+
+      c = *lf_ptr;
+      while (isalnum(*lf_ptr) || (*lf_ptr == '.') ||
+             (*lf_ptr == '*') || (*lf_ptr == '%') ) {
+        c = *lf_ptr++;
+        *tk_ptr++ = c;
+        tk_len -= 1;
+        /* Terminate string here for further processing. We know it fits
+         * since we left space initially.
+         */
+        *tk_ptr = 0x00;
+
+        /* token is complete as soon as alpha char is copied */
+        if (isalpha(c)) {
+          break;
+        }
+
+        /* no more space in token buffer */
+        if (tk_len == 0) {
+          break;
+        }
+      }
+      switch (c) {
+      case 's':
+        /* sensor number */
+        /* change specifier to 'd', print the value into temp string
+         * and copy that over
+         */
+        *(tk_ptr-1) = 'd';
+        needed = snprintf(temp, sizeof(temp), token, sensor);
+        if (needed > len) {
+          /* Here we have an error condition, the format conversion does
+           * not fit fully into the buffer
+           *
+           * Here we just ignore the token.
+           */
+        } else {
+          tk_ptr = temp;
+          while (*tk_ptr && (len > 0)) {
+            *tf_ptr++ = *tk_ptr++;
+            len -= 1;
+          }
+        }
+        break;
+      case 'Q':
+      case 'q':
+        /* Voltage in mV, either vdd or ad */
+        /* change specifier to 'f', print value into temp string
+         * and copy that over
+         */
+        *(tk_ptr-1) = 'f';
+        needed = snprintf(temp, sizeof(temp), token, (c == 'Q')?vdd:ad);
+        if (needed > len) {
+          /* Here we have an error condition, the format conversion does
+           * not fit fully into the buffer
+           *
+           * Here we just ignore the token.
+           */
+        } else {
+          tk_ptr = temp;
+          while (*tk_ptr && (len > 0)) {
+            *tf_ptr++ = *tk_ptr++;
+            len -= 1;
+          }
+        }
+        break;
+      case 'C':
+        /* Temperature in degrees Centigrade */
+        /* change specifier to 'f', print value into temp string
+         * and copy that over
+         */
+        *(tk_ptr-1) = 'f';
+        needed = snprintf(temp, sizeof(temp), token, temp_c);
+        if (needed > len) {
+          /* Here we have an error condition, the format conversion does
+           * not fit fully into the buffer
+           *
+           * Here we just ignore the token.
+           */
+        } else {
+          tk_ptr = temp;
+          while (*tk_ptr && (len > 0)) {
+            *tf_ptr++ = *tk_ptr++;
+            len -= 1;
+          }
+        }
+        break;
+      case 'F':
+        /* Temperature in degrees Fahrenheit */
+        /* change specifier to 'f', print value into temp string
+         * and copy that over
+         */
+        *(tk_ptr-1) = 'f';
+        needed = snprintf(temp, sizeof(temp), token, c2f(temp_c));
+        if (needed > len) {
+          /* Here we have an error condition, the format conversion does
+           * not fit fully into the buffer
+           *
+           * Here we just ignore the token.
+           */
+        } else {
+          tk_ptr = temp;
+          while (*tk_ptr && (len > 0)) {
+            *tf_ptr++ = *tk_ptr++;
+            len -= 1;
+          }
+        }
+        break;
+      case 'R':
+        /* ROM serial number */
+        /* change specifier to 'X' (will be ignored anyway),
+         * print value into temp string with fixed formatting
+         * and copy that over
+         */
+        *(tk_ptr-1) = 'X';
+        if (sn != NULL) {
+          needed = snprintf(temp, sizeof(temp),
+                            "%02X%02X%02X%02X%02X%02X%02X%02X",
+                            sn[0], sn[1], sn[2], sn[3],
+                            sn[4], sn[5], sn[6], sn[7]);
+        } else {
+          needed = snprintf(temp, sizeof(temp), "null");
+        }
+        if (needed > len) {
+          /* Here we have an error condition, the format conversion does
+           * not fit fully into the buffer
+           *
+           * Here we just ignore the token.
+           */
+        } else {
+          tk_ptr = temp;
+          while (*tk_ptr && (len > 0)) {
+            *tf_ptr++ = *tk_ptr++;
+            len -= 1;
+          }
+        }
+        break;
+      case 'N':
+        /* Seconds since Epoch */
+        /* Change specifier to 's' */
+        *(tk_ptr-1) = 's';
+        /* fall through */
+      default:
+        /* nothing digitemp-specific */
+        tk_ptr = token;
+        while (*tk_ptr && (len > 0)) {
+          *tf_ptr++ = *tk_ptr++;
+          len -= 1;
+        }
+        break;
+      }
+    }
+  }
+  /* Terminate string. We originally reserved one character slot to
+   * make sure this just fits
+   */
+  *tf_ptr = 0x00;
+  return 1;
+}
+
+
+/*
+ * Run a number of test cases against the build_af function to verify
+ * the the relevant edge cases do work as intended.
+ */
+int test_build_af() {
+
+  char outbuf[1024];
+  unsigned char sn[8] = { 0x01, 0x12, 0x23, 0x34, 0x45, 0x56, 0x67, 0x78 };
+  char *af_test[] = {
+    "%R",
+    "abcdefg",
+    "abcde%s",
+    "abcd%.02C",
+    "abcd%.02F",
+    "X-%N",
+    "bla_%.02Q",
+    "hex_%.02q"
+  };
+  int res;
+  size_t bufsize;
+
+  bzero(outbuf, sizeof(outbuf));
+  bufsize = sizeof(outbuf);
+  res = build_af(outbuf, bufsize, af_test[0],
+                 0, 0.0, 3.0, 2.56, sn);
+  fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
+          af_test[0], (int)bufsize, res, outbuf);
+
+  for (bufsize = 14; bufsize < 20; bufsize += 1) {
+    bzero(outbuf, sizeof(outbuf));
+    /*bufsize = sizeof(outbuf);*/
+    res = build_af(outbuf, bufsize, af_test[0],
+                   0, 0.0, 3.0, 2.56, sn);
+    fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
+            af_test[0], (int)bufsize, res, outbuf);
+  }
+
+  for (bufsize = 6; bufsize < 10; bufsize += 1) {
+    bzero(outbuf, sizeof(outbuf));
+    res = build_af(outbuf, bufsize, af_test[1],
+                   0, 0.0, 3.0, 2.56, sn);
+    fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
+            af_test[1], (int)bufsize, res, outbuf);
+  }
+
+  for (bufsize = 5; bufsize < 11; bufsize += 1) {
+    bzero(outbuf, sizeof(outbuf));
+    res = build_af(outbuf, bufsize, af_test[2],
+                   0, 0.0, 3.0, 2.56, sn);
+    fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
+            af_test[2], (int)bufsize, res, outbuf);
+  }
+
+  for (bufsize = 5; bufsize < 11; bufsize += 1) {
+    bzero(outbuf, sizeof(outbuf));
+    res = build_af(outbuf, bufsize, af_test[3],
+                   0, 0.0, 3.0, 2.56, sn);
+    fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
+            af_test[3], (int)bufsize, res, outbuf);
+  }
+
+  for (bufsize = 5; bufsize < 11; bufsize += 1) {
+    bzero(outbuf, sizeof(outbuf));
+    res = build_af(outbuf, bufsize, af_test[4],
+                   0, 0.0, 3.0, 2.56, sn);
+    fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
+            af_test[4], (int)bufsize, res, outbuf);
+  }
+
+  for (bufsize = 3; bufsize < 11; bufsize += 1) {
+    bzero(outbuf, sizeof(outbuf));
+    res = build_af(outbuf, bufsize, af_test[5],
+                   0, 0.0, 3.0, 2.56, sn);
+    fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
+            af_test[5], (int)bufsize, res, outbuf);
+  }
+
+  for (bufsize = 5; bufsize < 11; bufsize += 1) {
+    bzero(outbuf, sizeof(outbuf));
+    res = build_af(outbuf, bufsize, af_test[6],
+                   0, 0.0, 3.0, 2.56, sn);
+    fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
+            af_test[6], (int)bufsize, res, outbuf);
+  }
+
+  for (bufsize = 5; bufsize < 11; bufsize += 1) {
+    bzero(outbuf, sizeof(outbuf));
+    res = build_af(outbuf, bufsize, af_test[7],
+                   0, 0.0, 3.0, 2.56, sn);
+    fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
+            af_test[7], (int)bufsize, res, outbuf);
+  }
+  return 0;
+}
+
+
+/* -----------------------------------------------------------------------
    Print a string to the console or the logfile
    ----------------------------------------------------------------------- */
 int log_string( char *line )
@@ -628,6 +948,56 @@ int log_humidity( int sensor, double temp_c, int humidity, unsigned char *sn )
 
                   strcat( temp, "\n" );
                   break;
+    }
+  } else {
+    sprintf( temp, "Time Error\n" );
+  }
+  /* Log it to stdout, logfile or both */
+  log_string( temp );
+
+  return 0;
+}
+
+
+/* -----------------------------------------------------------------------
+   Log one line of text to the logfile with the current date and time
+
+   Used with temperature and voltage values from DS2438
+   ----------------------------------------------------------------------- */
+int log_temperature_voltage( int sensor, double temp_c,
+                             float vdd, float ad, unsigned char *sn )
+{
+  char	temp[1024],
+        time_format[160];
+  time_t mytime;
+
+  mytime = time(NULL);
+  if( mytime )
+  {
+    /* Log the temperature */
+    switch( log_type )
+    {
+      /* Multiple Centigrade temps per line */
+    case 2:
+    case 4:
+      sprintf( temp, "\t%3.2f", temp_c );
+      break;
+
+      /* Multiple Fahrenheit temps per line */
+      case 3:
+      case 5:
+        sprintf( temp, "\t%3.2f", c2f(temp_c) );
+        break;
+      default:
+        /* Build the time format string from log_format */
+        build_af( time_format, sizeof(time_format), adc_format,
+                  sensor, temp_c, vdd, ad, sn );
+
+        /* Handle the time format tokens */
+        strftime( temp, 1024, time_format, localtime( &mytime ) );
+
+        strcat( temp, "\n" );
+        break;
     }
   } else {
     sprintf( temp, "Time Error\n" );
@@ -1077,10 +1447,8 @@ int read_ds2438( int sensor_family, int sensor )
   double	temp_c;
   float		vdd,
   		ad;
-  char		temp[1024],
-  		time_format[160];
-  time_t	mytime;
   int           cad = 0;
+  unsigned char TempSN[8];
   int           try;
   int           result = FALSE;
 
@@ -1094,7 +1462,7 @@ int read_ds2438( int sensor_family, int sensor )
     /* Read Vdd, the supply voltage */
     if( (vdd = Volt_Reading(0, 1, &cad)) != -1.0 )
     {
-      /* Read A/D reading from the humidity sensor */
+      /* Read A/D reading from the sense input pin */
       if( (ad = Volt_Reading(0, 0, NULL)) != -1.0 )
       {
         result = TRUE;
@@ -1107,29 +1475,10 @@ int read_ds2438( int sensor_family, int sensor )
   }
 
   /* Log the temperature */
-  mytime = time(NULL);
-  switch( log_type )
-  {
-      /* Multiple Centigrade temps per line */
-      case 2:     sprintf(temp, "\t%3.2f", temp_c);
-                  break;
+  owSerialNum(0, &TempSN[0], TRUE);
+  log_temperature_voltage(sensor, temp_c, vdd, ad, TempSN);
 
-      /* Multiple Fahrenheit temps per line */
-      case 3:     sprintf(temp, "\t%3.2f", c2f(temp_c));
-                  break;
-
-      default:
-                  sprintf(time_format, "%%b %%d %%H:%%M:%%S Sensor %d VDD: %0.2f AD: %0.2f CAD: %d C: %0.2f", sensor, vdd, ad, cad, temp_c);
-                  /* Handle the time format tokens */
-                  strftime(temp, 1024, time_format, localtime(&mytime));
-                  strcat(temp, "\n");
-                  break;
-  } /* switch( log_type ) */
-
-  /* Log it to stdout, logfile or both */
-  log_string(temp);
-
-  return TRUE;
+  return result;
 }
 
 
@@ -1482,6 +1831,7 @@ int read_all( struct _roms *sensor_list )
    LOG_TYPE <from -o>
    LOG_FORMAT <format string for temperature logging and printing>
    CNT_FORMAT <format string for counter logging and printing>
+   ADC_FORMAT <format string for A/D converter logging and printing>
    SENSORS <number of ROM lines>
    Multiple ROM x <serial number in bytes> lines
 
@@ -1536,6 +1886,10 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
       ptr = strtok( NULL, "\"\n");
       strncpy( humidity_format, ptr, sizeof(humidity_format)-1 );
       humidity_format[sizeof(humidity_format)-1] = 0x00;
+    } else if (strncasecmp("ADC_FORMAT", ptr, 10) == 0) {
+      ptr = strtok( NULL, "\"\n");
+      strncpy(adc_format, ptr, sizeof(adc_format)-1 );
+      adc_format[sizeof(adc_format)-1] = 0x00;
     } else if( strncasecmp( "LOG", ptr, 3 ) == 0 ) {
       ptr = strtok( NULL, " \t\n" );
       strncpy( log_file, ptr, sizeof(log_file)-1 );
@@ -1721,6 +2075,7 @@ int read_rcfile( char *fname, struct _roms *sensor_list )
    LOG_TYPE <from -o>
    LOG_FORMAT <format string for temperature logging and printing>
    CNT_FORMAT <format string for counter logging and printing>
+   ADC_FORMAT <format string for A/D converter logging and printing>
    SENSORS <number of ROM lines>
    Multiple ROM x <serial number in bytes> lines
 
@@ -1754,7 +2109,8 @@ int write_rcfile( char *fname, struct _roms *sensor_list )
   fprintf( fp, "LOG_FORMAT \"%s\"\n", temp_format );
   fprintf( fp, "CNT_FORMAT \"%s\"\n", counter_format );
   fprintf( fp, "HUM_FORMAT \"%s\"\n", humidity_format );
-    
+  fprintf(fp, "ADC_FORMAT \"%s\"\n", adc_format);
+
   fprintf( fp, "SENSORS %d\n", sensor_list->max );
 
   for( x = 0; x < sensor_list->max; x++ )
@@ -2385,6 +2741,8 @@ int main( int argc, char *argv[] )
   tmp_counter_format[0] = 0;
   tmp_temp_format[0] = 0;
   tmp_humidity_format[0] = 0;
+  bzero(adc_format, sizeof(adc_format));
+  bzero(tmp_adc_format, sizeof(tmp_adc_format));
   read_time = 1000;			/* 1000mS read delay		*/
   tmp_read_time = -1;
   sensor = 0;				/* First sensor	in list		*/
@@ -2398,8 +2756,9 @@ int main( int argc, char *argv[] )
   strcpy( temp_format, "%b %d %H:%M:%S Sensor %s C: %.2C F: %.2F" );
   strcpy( counter_format, "%b %d %H:%M:%S Sensor %s #%n %C" );
   strcpy( humidity_format, "%b %d %H:%M:%S Sensor %s C: %.2C F: %.2F H: %h%%" );
+  strcpy( adc_format, "%b %d %H:%M:%S Sensor %s VDD: %0.2Q AD: %0.2q C: %0.2C");
   strcpy( conf_file, ".digitemprc" );
-  strcpy( option_list, "?ThqiaAvwr:f:s:l:t:d:n:o:c:O:H:" );
+  strcpy( option_list, "?ThqiaAvwr:f:s:l:t:d:n:o:c:O:H:V:" );
 
 
   /* Command line options override any .digitemprc options temporarily	*/
@@ -2472,6 +2831,17 @@ int main( int argc, char *argv[] )
 		break;
 
       case 'A': opts |= OPT_DS2438;		/* Treat DS2438 as A/D converter */
+                break;
+
+      case 'V': if (optarg) {
+                  if (strlen(optarg) >= sizeof(tmp_adc_format)) {
+                    printf("ADC format string too long (>%d)!\n",
+                           (int)sizeof(tmp_adc_format)-1);
+                  } else {
+                    strncpy(tmp_adc_format, optarg, sizeof(tmp_adc_format)-1);
+                    tmp_adc_format[sizeof(tmp_adc_format)-1] = 0x00;
+                  }
+                }
       		break;
 
       case 'o': if(optarg)			/* Temperature Logfile format	*/
@@ -2528,6 +2898,11 @@ int main( int argc, char *argv[] )
     } /* switch getopt */
   }  /* while getopt */
 
+  /* Run some internal tests */
+  if ( opts & OPT_TEST ) {
+    test_build_af();
+  }
+
   /* Require one 1 action command, no more, no less. */
   if ((opts & (OPT_WALK|OPT_INIT|OPT_SINGLE|OPT_ALL)) == 0 )
   {
@@ -2573,6 +2948,11 @@ int main( int argc, char *argv[] )
     humidity_format[sizeof(humidity_format)-1] = 0x00;
   }
   
+  if( tmp_adc_format[0] != 0 ) {
+    strncpy(adc_format, tmp_adc_format, sizeof(adc_format)-1 );
+    adc_format[sizeof(adc_format)-1] = 0x00;
+  }
+
   /* Show the copyright banner? */
   if( !(opts & OPT_QUIET) )
   {
