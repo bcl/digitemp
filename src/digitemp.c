@@ -1,6 +1,6 @@
 /* -----------------------------------------------------------------------
    DigiTemp
-      
+
    Copyright 1996-2018 by Brian C. Lane <bcl@brianlane.com>
    All Rights Reserved
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License along
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
-   
+
      digitemp -w                        Walk the LAN & show all
      digitemp -i			Initialize .digitemprc file
      digitemp -I                        Initialize .digitemprc w/sorted serial #s
@@ -37,7 +37,7 @@
      digitemp -o"output format string"  See description below
      digitemp -O"counter format"        See description below
      digitemp -H"Humidity format"       See description below
-     digitemp -V "ADC format"           Define output format for voltages
+     digitemp -V"ADC format"            See description below
 
      Logfile formats:
      1 = (default) - 1 line per sensor, time, C, F
@@ -53,12 +53,11 @@
 
      Humidity uses %h for the relative humidity in percent
 
-     The counter format uses %n for the counter # and %C for the count 
+     The counter format uses %n for the counter # and %C for the count
      in decimal
 
-     The A/D converter (ADC) format uses %Q for Vdd and %q for the analog
-     input voltage Vad, both measured in Volt; %J gives Vsense, measured
-     in mV.
+     The ADC format uses %Q for Vdd and %q for the analog input voltage Vad,
+     both measured in Volt; %J gives Vsense, measured in mV.
 
      Remember the case of the token is important!
 
@@ -149,10 +148,11 @@ void usage()
   printf("                -n 50                         Number of times to repeat\n");
   printf("                                              0=loop forever\n");
   printf("                -A                            Treat DS2438 as A/D converter\n");
-  printf("                -O\"counter format string\"      See description below\n");
+  printf("                -O\"counter format string\"     See description below\n");
   printf("                -o 2                          Output format for logfile\n");
   printf("                -o\"output format string\"      See description below\n");
   printf("                -H\"Humidity format string\"    See description below\n");
+  printf("                -V\"ADC format\"                See description below\n");
   printf("\nLogfile formats:  1 = One line per sensor, time, C, F (default)\n");
   printf("                  2 = One line per sample, elapsed time, temperature in C\n");
   printf("                  3 = Same as #2, except temperature is in F\n");

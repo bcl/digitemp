@@ -10,10 +10,10 @@
 .\" .sp <n>    insert n+1 empty lines
 .\" for manpage-specific macros, see man(7)
 .SH NAME
-digitemp \- program to read from 1-wire temperature sensors. 
+digitemp \- program to read from 1-wire temperature sensors.
 .SH SYNOPSIS
 .B digitemp
-.RI [ options ] 
+.RI [ options ]
 .SH DESCRIPTION
 DigiTemp uses the Dallas 1-wire bus to read temperatures from digital
 sensors attached to a serial port adapter. It handles initializing the bus,
@@ -28,8 +28,8 @@ DS2480B based DS9097U adapter. 1-wire adapters from ibuttonlink.com,
 such as the Link45 are also supported.
 .SH OPTIONS
 At least 1 action must be given, along with some optional arguments. Actions
-are one (and only on) of the 
-.B \-w \-t \-a \-w 
+are one (and only on) of the
+.B \-w \-t \-a \-w
 options
 .TP
 .B \-h, \-?
@@ -38,7 +38,7 @@ Show summary of options.
 .B \-v
 Show verbose output.
 .TP
-.B \-i 
+.B \-i
 Initialize .digitemprc file, search the bus for all supported devices.
 .TP
 .B \-I
@@ -58,7 +58,7 @@ Send output to logfile, the output format is defined by the .B \-o
 command
 .TP
 .B \-c digitemp.conf
-Set digitemp configuration file. The default is .digitemprc in the current 
+Set digitemp configuration file. The default is .digitemprc in the current
 directory.
 .TP
 .B \-r 1000
@@ -103,7 +103,7 @@ Temperature Format
 The temperature format can be either a numeric value, or a string. The
 numeric values select pre-configured output formats:
 .PP
-    1 = One line per sensor, time, C, F (default) 
+    1 = One line per sensor, time, C, F (default)
     2 = One line per sample, elapsed time, temperature in C
     3 = Same as #2, except temperature is in F
 .PP
@@ -132,9 +132,9 @@ The case of the token is important! The default format string is:
 "%b %d %H:%M:%S Sensor %s C: %.2C F: %.2F" which gives you an
 output of: May 24 21:25:43 Sensor 0 C: 23.66 F: 74.59
 .PP
-The DS2438 sensor can be used for a variety of things. It includes a 
+The DS2438 sensor can be used for a variety of things. It includes a
 temperature sensor and A/D converter. DigiTemp defaults to using it as a
-humidity sensor. The raw voltages and currents can be displayed by passing 
+humidity sensor. The raw voltages and currents can be displayed by passing
 the \-A argument
 .PP
 When the \-o2 or \-o3 log options are used the attached DS2438's temperatures
@@ -167,7 +167,7 @@ The A/D converter (ADC) format is the same as the temperature format
 string with the addition of two format specifiers:
 .TP
 .B %Q
-for Vdd measurement (unit V "Volt"), 
+for Vdd measurement (unit V "Volt"),
 .B %q
 for the analog input voltage Vad (unit V "Volt"), and
 .B %J for Vsense (unit mV).
