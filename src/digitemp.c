@@ -170,7 +170,7 @@ void usage()
   printf("        %%n is the counter # and %%C is the count in decimal.\n");
   printf("        The humidity format uses %%h for the humidity in percent\n\n");
   printf("        The A/D converter format uses %%Q for Vd and %%q for the analog\n");
-  printf("        input voltage Vad, both measured in Volt; %J gives Vsense in mV.\n\n");
+  printf("        input voltage Vad, both measured in Volt; %%J gives Vsense in mV.\n\n");
   printf("        The logfile may contain strftime pattern to format the filename\n");
 }
 
