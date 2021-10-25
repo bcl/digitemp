@@ -251,10 +251,17 @@ float Volt_Reading(int portnum, int vdd, int *cad)
 	    if(cad) {
 
 	      /* Get Current reading as well */
+              /* convert from 12-bit 2's complement, see
+               * https://en.wikipedia.org/wiki/Two%27s_complement
+               */
 	      c = send_block[8] & 0x3;
-
 	      *cad =  (c << 8) | send_block[7];
-	      if(send_block[8] & 0x4) *cad =  - *cad;
+	      if(send_block[8] & 0x4) {
+                      /* Negative value represented by set sign bit
+                       * with weight of -2^12
+                       */
+                      *cad = *cad - 4096;
+              }
 
 	      //	      printf("CAD=%d\n", *cad);
 	    }
