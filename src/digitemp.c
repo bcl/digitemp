@@ -517,6 +517,7 @@ int build_cf( char *time_format, char *format, int sensor, int page,
      sensor            internal sensor number
      vdd               measured value of VDD
      ad                measured value of the analog input voltage
+     vsens             measured value of Vsense in mV
      sn                serial number of the sensor
    Output value:
      0                 Some error occured
@@ -530,8 +531,7 @@ int build_af(char *time_format, size_t tf_size, char *format, int sensor,
     *lf_ptr,
     *tk_ptr,
     token[80],
-    temp[80],
-    c;
+    temp[80];
   size_t len;
   size_t tk_len;
   int needed;
@@ -561,19 +561,14 @@ int build_af(char *time_format, size_t tf_size, char *format, int sensor,
       tk_ptr = token;
       tk_len = sizeof(token)-1;
 
-      c = *lf_ptr;
       while (isalnum(*lf_ptr) || (*lf_ptr == '.') ||
              (*lf_ptr == '*') || (*lf_ptr == '%') ) {
-        c = *lf_ptr++;
-        *tk_ptr++ = c;
+        *tk_ptr++ = *lf_ptr++;
+        *tk_ptr = 0;
         tk_len -= 1;
-        /* Terminate string here for further processing. We know it fits
-         * since we left space initially.
-         */
-        *tk_ptr = 0x00;
 
         /* token is complete as soon as alpha char is copied */
-        if (isalpha(c)) {
+        if (isalpha(*(tk_ptr-1))) {
           break;
         }
 
@@ -582,7 +577,7 @@ int build_af(char *time_format, size_t tf_size, char *format, int sensor,
           break;
         }
       }
-      switch (c) {
+      switch (*(tk_ptr-1)) {
       case 's':
         /* sensor number */
         /* change specifier to 'd', print the value into temp string
@@ -607,11 +602,15 @@ int build_af(char *time_format, size_t tf_size, char *format, int sensor,
       case 'Q':
       case 'q':
         /* Voltage in mV, either vdd or ad */
-        /* change specifier to 'f', print value into temp string
-         * and copy that over
-         */
-        *(tk_ptr-1) = 'f';
-        needed = snprintf(temp, sizeof(temp), token, (c == 'Q')?vdd:ad);
+        {
+          float value = (*(tk_ptr-1) == 'Q')?vdd:ad;
+
+          /* change specifier to 'f', print value into temp string
+           * and copy that over
+           */
+          *(tk_ptr-1) = 'f';
+          needed = snprintf(temp, sizeof(temp), token, value);
+        }
         if (needed > len) {
           /* Here we have an error condition, the format conversion does
            * not fit fully into the buffer
