@@ -760,90 +760,99 @@ int test_build_af() {
     "hex_%.02q",
     "vsens_%.04J"
   };
-  int res;
+  int res, rc = 0;
   size_t bufsize;
 
   bzero(outbuf, sizeof(outbuf));
   bufsize = sizeof(outbuf);
   res = build_af(outbuf, bufsize, af_test[0],
                  0, 0.0, 3.0, 2.56, 5.6143, sn);
-  fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
-          af_test[0], (int)bufsize, res, outbuf);
+  rc = rc || !res;
+  fprintf(stdout, "%s: Testing '%s', output size %d, '%s'\n",
+          res ? "PASS":"FAIL", af_test[0], (int)bufsize, outbuf);
 
   for (bufsize = 14; bufsize < 20; bufsize += 1) {
     bzero(outbuf, sizeof(outbuf));
-    /*bufsize = sizeof(outbuf);*/
     res = build_af(outbuf, bufsize, af_test[0],
                    0, 0.0, 3.0, 2.56, 5.6143, sn);
-    fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
-            af_test[0], (int)bufsize, res, outbuf);
+    rc = rc || !res;
+    fprintf(stdout, "%s: Testing '%s', output size %d, '%s'\n",
+            res ? "PASS":"FAIL", af_test[0], (int)bufsize, outbuf);
   }
 
   for (bufsize = 6; bufsize < 10; bufsize += 1) {
     bzero(outbuf, sizeof(outbuf));
     res = build_af(outbuf, bufsize, af_test[1],
                    0, 0.0, 3.0, 2.56, 5.6143, sn);
-    fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
-            af_test[1], (int)bufsize, res, outbuf);
+    rc = rc || !res;
+    fprintf(stdout, "%s: Testing '%s', output size %d, '%s'\n",
+            res ? "PASS":"FAIL", af_test[1], (int)bufsize, outbuf);
   }
 
   for (bufsize = 5; bufsize < 11; bufsize += 1) {
     bzero(outbuf, sizeof(outbuf));
     res = build_af(outbuf, bufsize, af_test[2],
                    0, 0.0, 3.0, 2.56, 5.6143, sn);
-    fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
-            af_test[2], (int)bufsize, res, outbuf);
+    rc = rc || !res;
+    fprintf(stdout, "%s: Testing '%s', output size %d, '%s'\n",
+            res ? "PASS":"FAIL", af_test[2], (int)bufsize, outbuf);
   }
 
   for (bufsize = 5; bufsize < 11; bufsize += 1) {
     bzero(outbuf, sizeof(outbuf));
     res = build_af(outbuf, bufsize, af_test[3],
                    0, 0.0, 3.0, 2.56, 5.6143, sn);
-    fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
-            af_test[3], (int)bufsize, res, outbuf);
+    rc = rc || !res;
+    fprintf(stdout, "%s: Testing '%s', output size %d, '%s'\n",
+            res ? "PASS":"FAIL", af_test[3], (int)bufsize, outbuf);
   }
 
   for (bufsize = 5; bufsize < 11; bufsize += 1) {
     bzero(outbuf, sizeof(outbuf));
     res = build_af(outbuf, bufsize, af_test[4],
                    0, 0.0, 3.0, 2.56, 5.6143, sn);
-    fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
-            af_test[4], (int)bufsize, res, outbuf);
+    rc = rc || !res;
+    fprintf(stdout, "%s: Testing '%s', output size %d, '%s'\n",
+            res ? "PASS":"FAIL", af_test[4], (int)bufsize, outbuf);
   }
 
   for (bufsize = 3; bufsize < 11; bufsize += 1) {
     bzero(outbuf, sizeof(outbuf));
     res = build_af(outbuf, bufsize, af_test[5],
                    0, 0.0, 3.0, 2.56, 5.6143, sn);
-    fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
-            af_test[5], (int)bufsize, res, outbuf);
+    rc = rc || !res;
+    fprintf(stdout, "%s: Testing '%s', output size %d, '%s'\n",
+            res ? "PASS":"FAIL", af_test[5], (int)bufsize, outbuf);
   }
 
   for (bufsize = 5; bufsize < 11; bufsize += 1) {
     bzero(outbuf, sizeof(outbuf));
     res = build_af(outbuf, bufsize, af_test[6],
                    0, 0.0, 3.0, 2.56, 5.6143, sn);
-    fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
-            af_test[6], (int)bufsize, res, outbuf);
+    rc = rc || !res;
+    fprintf(stdout, "%s: Testing '%s', output size %d, '%s'\n",
+            res ? "PASS":"FAIL", af_test[6], (int)bufsize, outbuf);
   }
 
   for (bufsize = 5; bufsize < 11; bufsize += 1) {
     bzero(outbuf, sizeof(outbuf));
     res = build_af(outbuf, bufsize, af_test[7],
                    0, 0.0, 3.0, 2.56, 5.6143, sn);
-    fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
-            af_test[7], (int)bufsize, res, outbuf);
+    rc = rc || !res;
+    fprintf(stdout, "%s: Testing '%s', output size %d, '%s'\n",
+            res ? "PASS":"FAIL", af_test[7], (int)bufsize, outbuf);
   }
 
   for (bufsize = 6; bufsize < 16; bufsize += 1) {
     bzero(outbuf, sizeof(outbuf));
     res = build_af(outbuf, bufsize, af_test[8],
                    0, 0.0, 3.0, 2.56, 5.6143, sn);
-    fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
-            af_test[8], (int)bufsize, res, outbuf);
+    rc = rc || !res;
+    fprintf(stdout, "%s: Testing '%s', output size %d, '%s'\n",
+            res ? "PASS":"FAIL", af_test[8], (int)bufsize, outbuf);
   }
 
-  return 0;
+  return rc;
 }
 
 
@@ -2940,7 +2949,7 @@ int main( int argc, char *argv[] )
 
   /* Run some internal tests */
   if ( opts & OPT_TEST ) {
-    test_build_af();
+    exit(test_build_af());
   }
 
   /* Require one 1 action command, no more, no less. */
