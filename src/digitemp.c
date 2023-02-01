@@ -1,6 +1,6 @@
 /* -----------------------------------------------------------------------
    DigiTemp
-      
+
    Copyright 1996-2018 by Brian C. Lane <bcl@brianlane.com>
    All Rights Reserved
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License along
    with this program; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
-   
+
      digitemp -w                        Walk the LAN & show all
      digitemp -i			Initialize .digitemprc file
      digitemp -I                        Initialize .digitemprc w/sorted serial #s
@@ -37,7 +37,7 @@
      digitemp -o"output format string"  See description below
      digitemp -O"counter format"        See description below
      digitemp -H"Humidity format"       See description below
-     digitemp -V "ADC format"           Define output format for voltages
+     digitemp -V"ADC format"            See description below
 
      Logfile formats:
      1 = (default) - 1 line per sensor, time, C, F
@@ -53,12 +53,11 @@
 
      Humidity uses %h for the relative humidity in percent
 
-     The counter format uses %n for the counter # and %C for the count 
+     The counter format uses %n for the counter # and %C for the count
      in decimal
 
-     The A/D converter (ADC) format uses %Q for Vdd and %q for the analog
-     input voltage Vad, both measured in Volt; %J gives Vsense, measured
-     in mV.
+     The ADC format uses %Q for Vdd and %q for the analog input voltage Vad,
+     both measured in Volt; %J gives Vsense, measured in mV.
 
      Remember the case of the token is important!
 
@@ -149,10 +148,11 @@ void usage()
   printf("                -n 50                         Number of times to repeat\n");
   printf("                                              0=loop forever\n");
   printf("                -A                            Treat DS2438 as A/D converter\n");
-  printf("                -O\"counter format string\"      See description below\n");
+  printf("                -O\"counter format string\"     See description below\n");
   printf("                -o 2                          Output format for logfile\n");
   printf("                -o\"output format string\"      See description below\n");
   printf("                -H\"Humidity format string\"    See description below\n");
+  printf("                -V\"ADC format\"                See description below\n");
   printf("\nLogfile formats:  1 = One line per sensor, time, C, F (default)\n");
   printf("                  2 = One line per sample, elapsed time, temperature in C\n");
   printf("                  3 = Same as #2, except temperature is in F\n");
@@ -517,6 +517,7 @@ int build_cf( char *time_format, char *format, int sensor, int page,
      sensor            internal sensor number
      vdd               measured value of VDD
      ad                measured value of the analog input voltage
+     vsens             measured value of Vsense in mV
      sn                serial number of the sensor
    Output value:
      0                 Some error occured
@@ -530,8 +531,7 @@ int build_af(char *time_format, size_t tf_size, char *format, int sensor,
     *lf_ptr,
     *tk_ptr,
     token[80],
-    temp[80],
-    c;
+    temp[80];
   size_t len;
   size_t tk_len;
   int needed;
@@ -561,19 +561,14 @@ int build_af(char *time_format, size_t tf_size, char *format, int sensor,
       tk_ptr = token;
       tk_len = sizeof(token)-1;
 
-      c = *lf_ptr;
       while (isalnum(*lf_ptr) || (*lf_ptr == '.') ||
              (*lf_ptr == '*') || (*lf_ptr == '%') ) {
-        c = *lf_ptr++;
-        *tk_ptr++ = c;
+        *tk_ptr++ = *lf_ptr++;
+        *tk_ptr = 0;
         tk_len -= 1;
-        /* Terminate string here for further processing. We know it fits
-         * since we left space initially.
-         */
-        *tk_ptr = 0x00;
 
         /* token is complete as soon as alpha char is copied */
-        if (isalpha(c)) {
+        if (isalpha(*(tk_ptr-1))) {
           break;
         }
 
@@ -582,7 +577,7 @@ int build_af(char *time_format, size_t tf_size, char *format, int sensor,
           break;
         }
       }
-      switch (c) {
+      switch (*(tk_ptr-1)) {
       case 's':
         /* sensor number */
         /* change specifier to 'd', print the value into temp string
@@ -607,11 +602,15 @@ int build_af(char *time_format, size_t tf_size, char *format, int sensor,
       case 'Q':
       case 'q':
         /* Voltage in mV, either vdd or ad */
-        /* change specifier to 'f', print value into temp string
-         * and copy that over
-         */
-        *(tk_ptr-1) = 'f';
-        needed = snprintf(temp, sizeof(temp), token, (c == 'Q')?vdd:ad);
+        {
+          float value = (*(tk_ptr-1) == 'Q')?vdd:ad;
+
+          /* change specifier to 'f', print value into temp string
+           * and copy that over
+           */
+          *(tk_ptr-1) = 'f';
+          needed = snprintf(temp, sizeof(temp), token, value);
+        }
         if (needed > len) {
           /* Here we have an error condition, the format conversion does
            * not fit fully into the buffer
@@ -761,90 +760,99 @@ int test_build_af() {
     "hex_%.02q",
     "vsens_%.04J"
   };
-  int res;
+  int res, rc = 0;
   size_t bufsize;
 
   bzero(outbuf, sizeof(outbuf));
   bufsize = sizeof(outbuf);
   res = build_af(outbuf, bufsize, af_test[0],
                  0, 0.0, 3.0, 2.56, 5.6143, sn);
-  fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
-          af_test[0], (int)bufsize, res, outbuf);
+  rc = rc || !res;
+  fprintf(stdout, "%s: Testing '%s', output size %d, '%s'\n",
+          res ? "PASS":"FAIL", af_test[0], (int)bufsize, outbuf);
 
   for (bufsize = 14; bufsize < 20; bufsize += 1) {
     bzero(outbuf, sizeof(outbuf));
-    /*bufsize = sizeof(outbuf);*/
     res = build_af(outbuf, bufsize, af_test[0],
                    0, 0.0, 3.0, 2.56, 5.6143, sn);
-    fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
-            af_test[0], (int)bufsize, res, outbuf);
+    rc = rc || !res;
+    fprintf(stdout, "%s: Testing '%s', output size %d, '%s'\n",
+            res ? "PASS":"FAIL", af_test[0], (int)bufsize, outbuf);
   }
 
   for (bufsize = 6; bufsize < 10; bufsize += 1) {
     bzero(outbuf, sizeof(outbuf));
     res = build_af(outbuf, bufsize, af_test[1],
                    0, 0.0, 3.0, 2.56, 5.6143, sn);
-    fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
-            af_test[1], (int)bufsize, res, outbuf);
+    rc = rc || !res;
+    fprintf(stdout, "%s: Testing '%s', output size %d, '%s'\n",
+            res ? "PASS":"FAIL", af_test[1], (int)bufsize, outbuf);
   }
 
   for (bufsize = 5; bufsize < 11; bufsize += 1) {
     bzero(outbuf, sizeof(outbuf));
     res = build_af(outbuf, bufsize, af_test[2],
                    0, 0.0, 3.0, 2.56, 5.6143, sn);
-    fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
-            af_test[2], (int)bufsize, res, outbuf);
+    rc = rc || !res;
+    fprintf(stdout, "%s: Testing '%s', output size %d, '%s'\n",
+            res ? "PASS":"FAIL", af_test[2], (int)bufsize, outbuf);
   }
 
   for (bufsize = 5; bufsize < 11; bufsize += 1) {
     bzero(outbuf, sizeof(outbuf));
     res = build_af(outbuf, bufsize, af_test[3],
                    0, 0.0, 3.0, 2.56, 5.6143, sn);
-    fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
-            af_test[3], (int)bufsize, res, outbuf);
+    rc = rc || !res;
+    fprintf(stdout, "%s: Testing '%s', output size %d, '%s'\n",
+            res ? "PASS":"FAIL", af_test[3], (int)bufsize, outbuf);
   }
 
   for (bufsize = 5; bufsize < 11; bufsize += 1) {
     bzero(outbuf, sizeof(outbuf));
     res = build_af(outbuf, bufsize, af_test[4],
                    0, 0.0, 3.0, 2.56, 5.6143, sn);
-    fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
-            af_test[4], (int)bufsize, res, outbuf);
+    rc = rc || !res;
+    fprintf(stdout, "%s: Testing '%s', output size %d, '%s'\n",
+            res ? "PASS":"FAIL", af_test[4], (int)bufsize, outbuf);
   }
 
   for (bufsize = 3; bufsize < 11; bufsize += 1) {
     bzero(outbuf, sizeof(outbuf));
     res = build_af(outbuf, bufsize, af_test[5],
                    0, 0.0, 3.0, 2.56, 5.6143, sn);
-    fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
-            af_test[5], (int)bufsize, res, outbuf);
+    rc = rc || !res;
+    fprintf(stdout, "%s: Testing '%s', output size %d, '%s'\n",
+            res ? "PASS":"FAIL", af_test[5], (int)bufsize, outbuf);
   }
 
   for (bufsize = 5; bufsize < 11; bufsize += 1) {
     bzero(outbuf, sizeof(outbuf));
     res = build_af(outbuf, bufsize, af_test[6],
                    0, 0.0, 3.0, 2.56, 5.6143, sn);
-    fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
-            af_test[6], (int)bufsize, res, outbuf);
+    rc = rc || !res;
+    fprintf(stdout, "%s: Testing '%s', output size %d, '%s'\n",
+            res ? "PASS":"FAIL", af_test[6], (int)bufsize, outbuf);
   }
 
   for (bufsize = 5; bufsize < 11; bufsize += 1) {
     bzero(outbuf, sizeof(outbuf));
     res = build_af(outbuf, bufsize, af_test[7],
                    0, 0.0, 3.0, 2.56, 5.6143, sn);
-    fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
-            af_test[7], (int)bufsize, res, outbuf);
+    rc = rc || !res;
+    fprintf(stdout, "%s: Testing '%s', output size %d, '%s'\n",
+            res ? "PASS":"FAIL", af_test[7], (int)bufsize, outbuf);
   }
 
   for (bufsize = 6; bufsize < 16; bufsize += 1) {
     bzero(outbuf, sizeof(outbuf));
     res = build_af(outbuf, bufsize, af_test[8],
                    0, 0.0, 3.0, 2.56, 5.6143, sn);
-    fprintf(stdout, "Testing '%s', output size %d, result %d, '%s'\n",
-            af_test[8], (int)bufsize, res, outbuf);
+    rc = rc || !res;
+    fprintf(stdout, "%s: Testing '%s', output size %d, '%s'\n",
+            res ? "PASS":"FAIL", af_test[8], (int)bufsize, outbuf);
   }
 
-  return 0;
+  return rc;
 }
 
 
@@ -2941,7 +2949,7 @@ int main( int argc, char *argv[] )
 
   /* Run some internal tests */
   if ( opts & OPT_TEST ) {
-    test_build_af();
+    exit(test_build_af());
   }
 
   /* Require one 1 action command, no more, no less. */
