@@ -19,4 +19,4 @@ jobs:
       - name: "Clone Repository"
         uses: actions/checkout@v3
       - name: Build DigiTemp
-        run: make ${{matrix.target}} && digitemp_* -T
+        run: make ${{matrix.target}} && ./digitemp_* -T
