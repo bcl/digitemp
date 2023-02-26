@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target: [ds9097, ds9097u, ds2490]
+        target: [ds9097, ds9097u]
 
     steps:
       - name: "Clone Repository"
