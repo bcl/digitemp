@@ -1,0 +1,22 @@
+name: Build and Test DigiTemp
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [ds9097, ds9097u]
+
+    steps:
+      - name: "Clone Repository"
+        uses: actions/checkout@v3
+      - name: Build DigiTemp
+        run: make ${{matrix.target}} && ./digitemp_* -T
