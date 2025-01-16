@@ -87,7 +87,7 @@ struct _coupler {
 
 /* Prototypes */
 void usage();
-void free_coupler();
+void free_coupler( int free_only );
 float c2f( float temp );
 int build_tf( char *time_format, char *format, int sensor, 
               float temp_c, int humidity, unsigned char *sn );
