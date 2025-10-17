@@ -3173,7 +3173,7 @@ int main( int argc, char *argv[] )
     if( (time(NULL) > last_time + sample_delay) && (sample_delay > 0) )
     {
       fprintf(stderr, "Warning: delay (-d) is less than the time needed to ");
-      fprintf(stderr, "read all of the attached sensors. It took %ld seconds", (long int) time(NULL) - last_time );
+      fprintf(stderr, "read all of the attached sensors. It took %ld seconds", (long int) (time(NULL) - last_time) );
       fprintf(stderr, " to read the sensors\n" );
     }
 
