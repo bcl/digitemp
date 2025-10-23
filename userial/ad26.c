@@ -251,10 +251,25 @@ float Volt_Reading(int portnum, int vdd, int *cad)
 	    if(cad) {
 
 	      /* Get Current reading as well */
+              /* convert from 12-bit 2's complement, see
+               * https://en.wikipedia.org/wiki/Two%27s_complement
+               * According to the DS2438 datasheet the current register
+               * has 10 significant bits (Page 6, Table 3). However,
+               * the stated conversion formulae seem to hint at
+               * 12 bits. Nevertheless, the stated voltage unit of
+               * 0.2441mV per digital unit and the maximum voltage
+               * rating on the Vsense pins of 250mV are consistent with
+               * a 10-bit register format plus sign bits. This is
+               * what we use here.
+               */
 	      c = send_block[8] & 0x3;
-
 	      *cad =  (c << 8) | send_block[7];
-	      if(send_block[8] & 0x4) *cad =  - *cad;
+	      if(send_block[8] & 0x4) {
+                      /* Negative value represented by set sign bit
+                       * with weight of -2^10
+                       */
+                      *cad = *cad - 1024;
+              }
 
 	      //	      printf("CAD=%d\n", *cad);
 	    }
