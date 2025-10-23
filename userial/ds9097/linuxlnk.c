@@ -185,15 +185,28 @@ SMALLINT owTouchReset(int portnum)
    cfsetispeed(&term[portnum], B115200);
    cfsetospeed(&term[portnum], B115200);
    
-   /* set to 6 data bits */
-   term[portnum].c_cflag |= CS6; 
+   /* set to 6 data bits with fallback to 8 if rejected */
+   term[portnum].c_cflag &= ~CSIZE;
+   term[portnum].c_cflag |= CS6;
 
    if (tcsetattr(fd[portnum], TCSANOW, &term[portnum] ) < 0 )
      {
-	OWERROR(OWERROR_SYSTEM_RESOURCE_INIT_FAILED);
-	perror("Reset: Error with tcsetattr 2");
-	close(fd[portnum]);
-	return FALSE;
+        /* CS6 failed, try CS8 fallback for modern kernels/drivers */
+        if (errno == EINVAL) {
+            term[portnum].c_cflag &= ~CSIZE;
+            term[portnum].c_cflag |= CS8;
+            if (tcsetattr(fd[portnum], TCSANOW, &term[portnum] ) < 0 ) {
+                OWERROR(OWERROR_SYSTEM_RESOURCE_INIT_FAILED);
+                perror("Reset: Error with tcsetattr 2 (CS6/CS8 fallback failed)");
+                close(fd[portnum]);
+                return FALSE;
+            }
+        } else {
+            OWERROR(OWERROR_SYSTEM_RESOURCE_INIT_FAILED);
+            perror("Reset: Error with tcsetattr 2");
+            close(fd[portnum]);
+            return FALSE;
+        }
      }
 
    return stat;

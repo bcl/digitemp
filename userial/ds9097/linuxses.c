@@ -38,6 +38,7 @@
 #include <unistd.h>
 #include <termios.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <ownet.h>
 #include <sys/file.h>
 
@@ -94,6 +95,7 @@ SMALLINT owAcquire(int portnum, char *port_zstr)
    term[portnum].c_cc[VTIME] = 0;
       
    /* 6 data bits, Receiver enabled, Hangup, Dont change "owner" */
+   /* Try CS6 first with fallback to CS8 for modern kernels */
    term[portnum].c_cflag |= CS6 | CREAD | HUPCL | CLOCAL;
    
    /* Set input and output speed to 115.2k */
@@ -103,10 +105,22 @@ SMALLINT owAcquire(int portnum, char *port_zstr)
    /* set the attributes */
    if(tcsetattr(fd[portnum], TCSANOW, &term[portnum]) < 0 )
      {
-	OWERROR(OWERROR_SYSTEM_RESOURCE_INIT_FAILED);
-	perror("owAcquire: failed to set attributes");	
-	close(fd[portnum]);
-	return FALSE;
+        /* CS6 failed, try CS8 fallback for modern kernels/drivers */
+        if (errno == EINVAL) {
+            term[portnum].c_cflag &= ~CSIZE;
+            term[portnum].c_cflag |= CS8 | CREAD | HUPCL | CLOCAL;
+            if (tcsetattr(fd[portnum], TCSANOW, &term[portnum]) < 0 ) {
+                OWERROR(OWERROR_SYSTEM_RESOURCE_INIT_FAILED);
+                perror("owAcquire: failed to set attributes (CS6/CS8 fallback failed)");
+                close(fd[portnum]);
+                return FALSE;
+            }
+        } else {
+            OWERROR(OWERROR_SYSTEM_RESOURCE_INIT_FAILED);
+            perror("owAcquire: failed to set attributes");
+            close(fd[portnum]);
+            return FALSE;
+        }
      }
       
    /* Flush the input and output buffers */
